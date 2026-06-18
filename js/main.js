@@ -319,7 +319,105 @@
   }());
 
   /* ===============================
-     Contact Form
+     Paystack Payment
+     =============================== */
+  (function () {
+    var modal = document.getElementById('paymentModal');
+    var closeBtn = document.getElementById('paymentModalClose');
+    var form = document.getElementById('paymentForm');
+    var emailInput = document.getElementById('payment-email');
+    var productEl = document.getElementById('paymentModalProduct');
+    var priceEl = document.getElementById('paymentModalPrice');
+    var submitBtn = document.getElementById('paymentSubmitBtn');
+    var currentProduct = null;
+
+    if (!modal || !form) return;
+
+    document.querySelectorAll('.btn-buy').forEach(function (btn) {
+      btn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        currentProduct = {
+          id: btn.dataset.productId,
+          name: btn.dataset.productName,
+          price: parseInt(btn.dataset.price, 10),
+        };
+        productEl.textContent = currentProduct.name;
+        priceEl.textContent = 'KES ' + currentProduct.price.toLocaleString() + ' / $' + (currentProduct.price / 130).toFixed(0);
+        emailInput.value = '';
+        modal.classList.add('open');
+        document.body.style.overflow = 'hidden';
+      });
+    });
+
+    function closeModal() {
+      modal.classList.remove('open');
+      document.body.style.overflow = '';
+    }
+
+    closeBtn.addEventListener('click', closeModal);
+    modal.addEventListener('click', function (e) {
+      if (e.target === modal || e.target.classList.contains('payment-modal-backdrop')) closeModal();
+    });
+
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      if (!currentProduct) return;
+
+      var email = emailInput.value.trim();
+      if (!email) return;
+
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = 'Processing...';
+
+      fetch('/api/initialize-payment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: email,
+          amount: currentProduct.price,
+          productId: currentProduct.id,
+          productName: currentProduct.name,
+        }),
+      })
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+          if (data.status && data.data) {
+            var handler = PaystackPop.setup({
+              key: data.public_key || 'pk_live_xxxxxxxxxxxxxxxx',
+              email: email,
+              amount: currentProduct.price * 100,
+              currency: 'KES',
+              ref: data.data.reference,
+              metadata: {
+                product_id: currentProduct.id,
+                product_name: currentProduct.name,
+              },
+              onClose: function () {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = 'Pay Now <span class="btn-arrow">→</span>';
+              },
+              callback: function (response) {
+                submitBtn.innerHTML = 'Redirecting...';
+                window.location.href = '/payment-success.html?reference=' + response.reference + '&product=' + encodeURIComponent(currentProduct.name);
+              },
+            });
+            handler.openIframe();
+          } else {
+            alert('Payment could not be initiated. Please try again.');
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = 'Pay Now <span class="btn-arrow">→</span>';
+          }
+        })
+        .catch(function () {
+          alert('Connection error. Please try again.');
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = 'Pay Now <span class="btn-arrow">→</span>';
+        });
+    });
+  }());
+
+  /* ===============================
+     Contact Form (Backend)
      =============================== */
   (function () {
     var form = document.querySelector('.contact-form');
@@ -328,25 +426,42 @@
     form.addEventListener('submit', function (e) {
       e.preventDefault();
       var btn = form.querySelector('.form-submit');
-      var originalText = btn.innerHTML;
+      var data = {
+        name: document.getElementById('contact-name')?.value || '',
+        email: document.getElementById('contact-email')?.value || '',
+        message: document.getElementById('contact-message')?.value || '',
+      };
+
       btn.innerHTML = 'Sending...';
       btn.disabled = true;
 
-      setTimeout(function () {
-        btn.innerHTML = 'Message Sent!';
-        btn.style.background = '#FFD700';
-        btn.style.boxShadow = '0 4px 24px rgba(255, 215, 0, 0.3)';
-
-        setTimeout(function () {
-          btn.innerHTML = originalText;
-          btn.style.background = '';
-          btn.style.boxShadow = '';
-          btn.disabled = false;
-          form.reset();
-        }, 3000);
-      }, 1500);
+      fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      })
+        .then(function (r) { return r.json(); })
+        .then(function () {
+          btn.innerHTML = 'Message Sent!';
+          btn.style.background = '#FFD700';
+          setTimeout(function () {
+            btn.innerHTML = 'Send It <span class="btn-arrow">→</span>';
+            btn.style.background = '';
+            btn.disabled = false;
+            form.reset();
+          }, 3000);
+        })
+        .catch(function () {
+          btn.innerHTML = 'Error! Try Again';
+          setTimeout(function () {
+            btn.innerHTML = 'Send It <span class="btn-arrow">→</span>';
+            btn.disabled = false;
+          }, 2000);
+        });
     });
   }());
+
+}());
 
   /* ===============================
      Parallax (Hero)

@@ -420,6 +420,95 @@ ul {
 }
 
 /* =============================
+   PAYMENT MODAL
+   ============================= */
+.payment-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  visibility: hidden;
+  opacity: 0;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.payment-modal.open {
+  visibility: visible;
+  opacity: 1;
+}
+
+.payment-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+}
+
+.payment-modal-content {
+  position: relative;
+  background: var(--color-gray-dark);
+  border: 1px solid rgba(255, 215, 0, 0.15);
+  border-radius: 12px;
+  padding: 40px;
+  max-width: 420px;
+  width: 90vw;
+  z-index: 1;
+}
+
+.payment-modal-close {
+  position: absolute;
+  top: 12px;
+  right: 16px;
+  background: none;
+  border: none;
+  color: var(--color-gray);
+  font-size: 1.6rem;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.payment-modal-close:hover {
+  color: var(--color-accent);
+}
+
+.payment-modal-title {
+  font-family: var(--font-heading);
+  font-size: 1.8rem;
+  letter-spacing: 0.04em;
+  margin-bottom: 8px;
+  color: var(--color-off-white);
+}
+
+.payment-modal-product {
+  font-size: 0.9rem;
+  color: var(--color-gray);
+  margin-bottom: 4px;
+}
+
+.payment-modal-price {
+  font-family: var(--font-heading);
+  font-size: 1.4rem;
+  color: var(--color-accent);
+  margin-bottom: 24px;
+  letter-spacing: 0.03em;
+}
+
+.payment-modal #paymentForm {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.payment-modal-note {
+  font-size: 0.7rem;
+  color: var(--color-gray);
+  text-align: center;
+  margin-top: 16px;
+  opacity: 0.7;
+}
+
+/* =============================
    SECTION BASE
    ============================= */
 .section {
@@ -1092,6 +1181,21 @@ ul {
   color: var(--color-gray-light);
   margin-top: 8px;
   opacity: 0.7;
+}
+
+.work-card-price {
+  font-family: var(--font-heading);
+  font-size: 1.2rem;
+  color: var(--color-accent);
+  margin-top: 10px;
+  letter-spacing: 0.04em;
+}
+
+.btn-buy {
+  margin-top: 12px;
+  padding: 10px 24px;
+  font-size: 0.75rem;
+  align-self: flex-start;
 }
 
 @media (max-width: 768px) {

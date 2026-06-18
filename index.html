@@ -30,6 +30,9 @@
   <!-- Styles -->
   <link rel="stylesheet" href="css/styles.css">
 
+  <!-- Paystack -->
+  <script src="https://js.paystack.co/v1/inline.js"></script>
+
   <!-- Favicon -->
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%230A0A0A'/%3E%3Cpath d='M8 20 Q8 8 16 6 Q24 8 24 20 Q24 26 16 28 Q8 26 8 20Z' fill='none' stroke='%23FFD700' stroke-width='2'/%3E%3C/svg%3E">
 </head>
@@ -126,6 +129,8 @@
           <h3 class="work-card-title">Jungle Green</h3>
           <p class="work-card-desc">Deep green precision cap with custom charm detail. Adjustable fit. NY edition.</p>
           <p class="work-card-materials">Premium Acrylic • Cotton Blend • Metal Charm</p>
+          <p class="work-card-price">KES 2,500</p>
+          <button class="btn btn-primary btn-buy" data-product-id="jungle-green" data-product-name="Jungle Green" data-price="2500">Buy Now</button>
         </div>
       </div>
 
@@ -139,6 +144,8 @@
           <h3 class="work-card-title">Blue Dream</h3>
           <p class="work-card-desc">Clean blue build with signature charm. Adjustable. That West Coast energy.</p>
           <p class="work-card-materials">Premium Acrylic • Cotton Blend • Metal Charm</p>
+          <p class="work-card-price">KES 2,500</p>
+          <button class="btn btn-primary btn-buy" data-product-id="blue-dream" data-product-name="Blue Dream" data-price="2500">Buy Now</button>
         </div>
       </div>
 
@@ -152,6 +159,8 @@
           <h3 class="work-card-title">Cream LA</h3>
           <p class="work-card-desc">Neutral tone. Clean finish. Adjustable with charm detail. LA classic.</p>
           <p class="work-card-materials">Premium Acrylic • Cotton Blend • Metal Charm</p>
+          <p class="work-card-price">KES 2,500</p>
+          <button class="btn btn-primary btn-buy" data-product-id="cream-la" data-product-name="Cream LA" data-price="2500">Buy Now</button>
         </div>
       </div>
 
@@ -165,6 +174,8 @@
           <h3 class="work-card-title">Pink Haze</h3>
           <p class="work-card-desc">Bold pink statement cap with charm detail. Adjustable fit. NY edition.</p>
           <p class="work-card-materials">Premium Acrylic • Cotton Blend • Metal Charm</p>
+          <p class="work-card-price">KES 2,500</p>
+          <button class="btn btn-primary btn-buy" data-product-id="pink-haze" data-product-name="Pink Haze" data-price="2500">Buy Now</button>
         </div>
       </div>
 
@@ -178,6 +189,8 @@
           <h3 class="work-card-title">Bronx</h3>
           <p class="work-card-desc">Beige and navy. Clean build. Minimal. Straight out the borough.</p>
           <p class="work-card-materials">Premium Acrylic • Cotton Blend</p>
+          <p class="work-card-price">KES 2,500</p>
+          <button class="btn btn-primary btn-buy" data-product-id="bronx" data-product-name="Bronx" data-price="2500">Buy Now</button>
         </div>
       </div>
 
@@ -191,6 +204,8 @@
           <h3 class="work-card-title">Blood & Blue</h3>
           <p class="work-card-desc">Two-cap set. Red and blue builds with charm details. Double the drip.</p>
           <p class="work-card-materials">Premium Acrylic • Cotton Blend • Metal Charms</p>
+          <p class="work-card-price">KES 4,500</p>
+          <button class="btn btn-primary btn-buy" data-product-id="blood-blue" data-product-name="Blood & Blue" data-price="4500">Buy Now</button>
         </div>
       </div>
     </div>
@@ -443,6 +458,28 @@
       <path d="M10 16V4M4 10l6-6 6 6" stroke="#0A0A0A" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
     </svg>
   </button>
+
+  <!-- ================ PAYMENT MODAL ================ -->
+  <div class="payment-modal" id="paymentModal" role="dialog" aria-modal="true" aria-label="Payment">
+    <div class="payment-modal-backdrop"></div>
+    <div class="payment-modal-content">
+      <button class="payment-modal-close" id="paymentModalClose" aria-label="Close">&times;</button>
+      <h3 class="payment-modal-title">Secure Checkout</h3>
+      <p class="payment-modal-product" id="paymentModalProduct"></p>
+      <p class="payment-modal-price" id="paymentModalPrice"></p>
+      <form id="paymentForm">
+        <div class="form-group">
+          <label for="payment-email" class="form-label">Email Address</label>
+          <input type="email" id="payment-email" class="form-input" placeholder="your@email.com" required autocomplete="email">
+        </div>
+        <button type="submit" class="btn btn-primary form-submit" id="paymentSubmitBtn">
+          Pay Now
+          <span class="btn-arrow">→</span>
+        </button>
+      </form>
+      <p class="payment-modal-note">Secured by Paystack. M-Pesa & international cards accepted.</p>
+    </div>
+  </div>
 
   <script src="js/main.js"></script>
 </body>

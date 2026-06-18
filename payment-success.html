@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Payment Successful — RAREHOOKS</title>
+  <meta name="robots" content="noindex">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #0A0A0A;
+      color: #F7F7F7;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 24px;
+      text-align: center;
+    }
+    .card {
+      max-width: 460px;
+      padding: 48px 32px;
+      background: #1A1A1A;
+      border-radius: 16px;
+      border: 1px solid rgba(255, 215, 0, 0.12);
+    }
+    .checkmark {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      background: rgba(255, 215, 0, 0.15);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 24px;
+      font-size: 2rem;
+      color: #FFD700;
+    }
+    h1 {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 2.8rem;
+      letter-spacing: 0.04em;
+      margin-bottom: 12px;
+      color: #FFD700;
+    }
+    p {
+      color: #888;
+      line-height: 1.8;
+      margin-bottom: 32px;
+      font-size: 0.95rem;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 14px 32px;
+      background: #FFD700;
+      color: #0A0A0A;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      font-size: 0.85rem;
+      border-radius: 4px;
+      text-decoration: none;
+      transition: transform 0.3s ease;
+    }
+    .btn:hover { transform: translateY(-2px); }
+    .ref { font-size: 0.75rem; color: #555; margin-top: 16px; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="checkmark">&#10003;</div>
+    <h1>Payment Successful!</h1>
+    <p>Your order has been received. We'll reach out to confirm shipping details within 24 hours. Nairobi to the world.</p>
+    <a href="/" class="btn">Back to Home</a>
+    <p class="ref" id="ref"></p>
+  </div>
+  <script>
+    var params = new URLSearchParams(window.location.search);
+    var ref = params.get('reference');
+    if (ref) document.getElementById('ref').textContent = 'Ref: ' + ref;
+  </script>
+</body>
+</html>
