@@ -177,24 +177,6 @@
   }());
 
   /* ===============================
-     Process Timeline Observer
-     =============================== */
-  (function () {
-    var steps = document.querySelectorAll('.process-step');
-    if (!steps.length) return;
-
-    var observer = new IntersectionObserver(function (entries) {
-      entries.forEach(function (entry) {
-        if (entry.isIntersecting) {
-          entry.target.classList.add('visible');
-        }
-      });
-    }, { threshold: 0.2 });
-
-    steps.forEach(function (s) { observer.observe(s); });
-  }());
-
-  /* ===============================
      Lightbox (Lookbook Gallery)
      =============================== */
   (function () {
