@@ -725,6 +725,14 @@ ul {
   filter: drop-shadow(0 0 60px var(--color-accent-dim));
 }
 
+.hero-cap-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+  box-shadow: 0 0 80px var(--color-accent-glow);
+}
+
 @media (max-width: 1024px) {
   .hero-cap-showcase {
     position: relative;
@@ -785,14 +793,21 @@ ul {
   overflow: hidden;
 }
 
-.work-card-image svg {
+.work-card-image svg,
+.work-card-img {
   width: 100%;
   height: 100%;
   object-fit: cover;
   transition: transform 0.8s var(--transition-smooth);
 }
 
-.work-card:hover .work-card-image svg {
+.work-card-img {
+  position: absolute;
+  inset: 0;
+}
+
+.work-card:hover .work-card-image svg,
+.work-card:hover .work-card-img {
   transform: scale(1.05);
 }
 
@@ -1182,14 +1197,21 @@ ul {
   inset: 0;
 }
 
-.signature-piece-image svg {
+.signature-piece-image svg,
+.signature-piece-img {
   width: 100%;
   height: 100%;
   object-fit: cover;
   transition: transform 0.8s var(--transition-smooth);
 }
 
-.signature-piece:hover .signature-piece-image svg {
+.signature-piece-img {
+  position: absolute;
+  inset: 0;
+}
+
+.signature-piece:hover .signature-piece-image svg,
+.signature-piece:hover .signature-piece-img {
   transform: scale(1.02);
 }
 
