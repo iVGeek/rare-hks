@@ -698,81 +698,9 @@ ul {
   }
 }
 
-/* Anime SVG art floating decorations */
-.anime-art {
-  position: absolute;
-  z-index: 0;
-  pointer-events: none;
-  opacity: 0.12;
-}
-
-.anime-art-sparkle {
-  width: 40px;
-  height: 40px;
-  animation: manga-sparkle 2.5s ease-in-out infinite;
-}
-
-.anime-art-sparkle:nth-child(2) { animation-delay: 0.6s; }
-.anime-art-sparkle:nth-child(3) { animation-delay: 1.2s; }
-
-.anime-silhouette {
-  position: absolute;
-  z-index: 0;
-  pointer-events: none;
-  opacity: 0.06;
-  width: clamp(160px, 20vw, 320px);
-  height: auto;
-  right: 2%;
-  bottom: 5%;
-}
-
-.anime-cloud {
-  position: absolute;
-  z-index: 0;
-  pointer-events: none;
-  opacity: 0.04;
-  width: clamp(200px, 30vw, 500px);
-  height: auto;
-}
-
-.anime-bubble {
-  position: absolute;
-  z-index: 0;
-  pointer-events: none;
-  opacity: 0.07;
-  width: clamp(100px, 15vw, 220px);
-  height: auto;
-}
-
-.anime-burst {
-  position: absolute;
-  z-index: 0;
-  pointer-events: none;
-  opacity: 0.07;
-  width: clamp(120px, 18vw, 280px);
-  height: auto;
-  animation: burst-pulse 3s ease-in-out infinite;
-}
-
-@keyframes burst-pulse {
-  0%, 100% { transform: scale(1); opacity: 0.07; }
-  50% { transform: scale(1.1); opacity: 0.12; }
-}
-
-/* Anime decorative section divider */
-.anime-divider {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 16px;
-  margin: 48px 0;
-  opacity: 0.15;
-}
-
-.anime-divider svg {
-  width: 60px;
-  height: 20px;
-}
+/* =============================
+   ANIME GRAFFITI BG — PUNCHY
+   ============================= */
 .anime-bg {
   position: relative;
 }
