@@ -699,6 +699,118 @@ ul {
 }
 
 /* =============================
+   ANIME GRAFFITI BG
+   ============================= */
+.anime-bg {
+  position: relative;
+}
+
+.anime-bg::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.04;
+  background:
+    /* Manga speech bubble silhouette */
+    radial-gradient(ellipse 80px 60px at 15% 20%, var(--color-accent) 50%, transparent 50%),
+    radial-gradient(circle 30px at 25% 26%, var(--color-black) 50%, transparent 50%),
+    /* Speed lines — multiple angled lines */
+    repeating-linear-gradient(
+      70deg,
+      transparent 0px,
+      transparent 18px,
+      var(--color-accent) 18px,
+      var(--color-accent) 19px,
+      transparent 19px,
+      transparent 36px
+    ),
+    /* Star burst */
+    conic-gradient(from 0deg at 85% 15%,
+      transparent 0deg, var(--color-accent) 5deg, transparent 10deg,
+      transparent 60deg, var(--color-accent) 65deg, transparent 70deg,
+      transparent 120deg, var(--color-accent) 125deg, transparent 130deg,
+      transparent 180deg, var(--color-accent) 185deg, transparent 190deg,
+      transparent 240deg, var(--color-accent) 245deg, transparent 250deg,
+      transparent 300deg, var(--color-accent) 305deg, transparent 310deg
+    ),
+    /* Diagonal screen tone hatching */
+    repeating-linear-gradient(
+      45deg,
+      transparent 0px,
+      transparent 3px,
+      rgba(255, 215, 0, 0.3) 3px,
+      rgba(255, 215, 0, 0.3) 4px,
+      transparent 4px,
+      transparent 8px
+    );
+  background-size:
+    160px 120px,
+    60px 60px,
+    140px 140px,
+    200px 200px,
+    16px 16px;
+  background-repeat:
+    no-repeat,
+    no-repeat,
+    repeat,
+    no-repeat,
+    repeat;
+  background-position:
+    15% 20%,
+    25% 26%,
+    0 0,
+    85% 15%,
+    0 0;
+}
+
+.anime-bg::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.025;
+  /* Second layer: different marks */
+  background:
+    /* Large circular spray */
+    radial-gradient(circle 120px at 70% 80%, var(--color-accent) 30%, transparent 30%),
+    /* Small star/sparkle clusters */
+    radial-gradient(2px 2px at 30% 50%, var(--color-accent) 50%, transparent 50%),
+    radial-gradient(3px 3px at 33% 48%, var(--color-accent) 50%, transparent 50%),
+    radial-gradient(2px 2px at 27% 53%, var(--color-accent) 50%, transparent 50%),
+    /* Horizontal action lines */
+    repeating-linear-gradient(
+      0deg,
+      transparent 0px,
+      transparent 30px,
+      var(--color-accent) 30px,
+      var(--color-accent) 31px,
+      transparent 31px,
+      transparent 60px
+    );
+  background-size:
+    240px 240px,
+    4px 4px,
+    6px 6px,
+    4px 4px,
+    120px 120px;
+  background-repeat:
+    no-repeat,
+    no-repeat,
+    no-repeat,
+    no-repeat,
+    repeat;
+  background-position:
+    70% 80%,
+    30% 50%,
+    33% 48%,
+    27% 53%,
+    0 0;
+}
+
+/* =============================
    HERO CAP SHOWCASE
    ============================= */
 .hero-cap-showcase {
@@ -732,8 +844,8 @@ ul {
     right: auto;
     top: auto;
     transform: none;
-    width: 280px;
-    height: 280px;
+    width: min(280px, 55vw);
+    height: min(280px, 55vw);
     margin: 40px auto 0;
     animation: float 6s ease-in-out infinite;
   }
@@ -760,7 +872,7 @@ ul {
 
 .works-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(280px, 100%), 1fr));
   gap: 24px;
 }
 
@@ -880,6 +992,7 @@ ul {
   position: relative;
   border-radius: 12px;
   overflow: hidden;
+  max-height: 60vh;
 }
 
 .about-image-placeholder {
@@ -954,8 +1067,9 @@ ul {
   }
 
   .about-image {
-    max-width: 400px;
+    max-width: min(400px, 85vw);
     margin: 0 auto;
+    max-height: 50vh;
   }
 }
 
@@ -1142,10 +1256,16 @@ ul {
 
 @media (max-width: 768px) {
   .signature-piece {
-    min-height: 360px;
+    min-height: min(360px, 70vw);
   }
   .signature-piece-content {
     padding: 32px 24px;
+  }
+}
+
+@media (max-width: 480px) {
+  .signature-piece {
+    min-height: 55vw;
   }
 }
 
