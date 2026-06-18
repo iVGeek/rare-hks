@@ -6,12 +6,18 @@
      =============================== */
   const preloader = document.querySelector('.preloader');
   if (preloader) {
-    window.addEventListener('load', function () {
-      setTimeout(function () {
-        preloader.classList.add('hidden');
-        document.body.style.overflow = '';
-      }, 600);
-    });
+    function hidePreloader() {
+      preloader.classList.add('hidden');
+      document.body.style.overflow = '';
+    }
+    if (document.readyState === 'complete') {
+      setTimeout(hidePreloader, 600);
+    } else {
+      window.addEventListener('load', function () {
+        setTimeout(hidePreloader, 600);
+      });
+    }
+    setTimeout(hidePreloader, 5000);
   }
 
   /* ===============================
