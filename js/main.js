@@ -21,14 +21,31 @@
   }
 
   /* ===============================
-     Custom Cursor
+     Custom Cursor + Trail
      =============================== */
   const cursorDot = document.querySelector('.cursor-dot');
   const cursorRing = document.querySelector('.cursor-ring');
+  const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
 
-  if (cursorDot && cursorRing) {
+  if (cursorDot && cursorRing && !isTouch) {
     let mouseX = 0, mouseY = 0;
     let ringX = 0, ringY = 0;
+
+    /* trail: create trailing dots */
+    var trail = [];
+    var trailCount = 5;
+    var trailContainer = document.createElement('div');
+    trailContainer.className = 'cursor-trail';
+    trailContainer.setAttribute('aria-hidden', 'true');
+    document.body.appendChild(trailContainer);
+
+    for (var t = 0; t < trailCount; t++) {
+      var dot = document.createElement('div');
+      dot.className = 'cursor-trail-dot';
+      dot.style.cssText = 'position:fixed;width:4px;height:4px;background:var(--color-accent,gold);border-radius:50%;pointer-events:none;z-index:9998;opacity:' + (0.5 - t * 0.08) + ';transform:translate(-50%,-50%);transition:opacity 0.3s';
+      trailContainer.appendChild(dot);
+      trail.push({ el: dot, x: 0, y: 0 });
+    }
 
     document.addEventListener('mousemove', function (e) {
       mouseX = e.clientX;
@@ -37,11 +54,50 @@
       cursorDot.style.top = mouseY + 'px';
     });
 
+    /* click burst effect */
+    document.addEventListener('mousedown', function (e) {
+      var burstCount = 8;
+      var burstColor = '#FFD700';
+      for (var b = 0; b < burstCount; b++) {
+        var spark = document.createElement('div');
+        var angle = (b / burstCount) * 2 * Math.PI;
+        var dist = 20 + Math.random() * 20;
+        spark.style.cssText = 'position:fixed;width:' + (2 + Math.random() * 3) + 'px;height:' + (2 + Math.random() * 3) + 'px;background:' + burstColor + ';border-radius:50%;pointer-events:none;z-index:9997;left:' + e.clientX + 'px;top:' + e.clientY + 'px;transform:translate(-50%,-50%)';
+        document.body.appendChild(spark);
+        var start = performance.now();
+        (function (el, angle, dist) {
+          function animateBurst(now) {
+            var elapsed = now - start;
+            var progress = elapsed / 400;
+            if (progress >= 1) { el.remove(); return; }
+            var x = e.clientX + Math.cos(angle) * dist * (1 - Math.pow(1 - progress, 2));
+            var y = e.clientY + Math.sin(angle) * dist * (1 - Math.pow(1 - progress, 2));
+            el.style.left = x + 'px';
+            el.style.top = y + 'px';
+            el.style.opacity = 1 - progress;
+            requestAnimationFrame(animateBurst);
+          }
+          requestAnimationFrame(animateBurst);
+        })(spark, angle, dist);
+      }
+    });
+
     function animateCursor() {
       ringX += (mouseX - ringX) * 0.12;
       ringY += (mouseY - ringY) * 0.12;
       cursorRing.style.left = ringX + 'px';
       cursorRing.style.top = ringY + 'px';
+
+      /* trail follows with increasing delay */
+      for (var i = 0; i < trailCount; i++) {
+        var prevX = i === 0 ? mouseX : trail[i - 1].x;
+        var prevY = i === 0 ? mouseY : trail[i - 1].y;
+        trail[i].x += (prevX - trail[i].x) * (0.15 - i * 0.02);
+        trail[i].y += (prevY - trail[i].y) * (0.15 - i * 0.02);
+        trail[i].el.style.left = trail[i].x + 'px';
+        trail[i].el.style.top = trail[i].y + 'px';
+      }
+
       requestAnimationFrame(animateCursor);
     }
     animateCursor();
@@ -50,19 +106,46 @@
       'a, button, .btn, .work-card, .lookbook-item, .signature-piece, .interactive, .form-input, .form-textarea, .nav-toggle, .back-to-top'
     );
     hoverTargets.forEach(function (el) {
-      el.addEventListener('mouseenter', function () { cursorRing.classList.add('hovering'); });
-      el.addEventListener('mouseleave', function () { cursorRing.classList.remove('hovering'); });
+      el.addEventListener('mouseenter', function () {
+        cursorRing.classList.add('hovering');
+        trail.forEach(function (d) { d.el.style.opacity = '0.8'; });
+      });
+      el.addEventListener('mouseleave', function () {
+        cursorRing.classList.remove('hovering');
+        trail.forEach(function (d) {
+          /* restore original opacity based on index */
+          var idx = Array.prototype.indexOf.call(trail, d);
+          d.el.style.opacity = 0.5 - idx * 0.08;
+        });
+      });
     });
 
     document.addEventListener('mouseleave', function () {
       cursorDot.style.opacity = '0';
       cursorRing.style.opacity = '0';
+      trail.forEach(function (d) { d.el.style.opacity = '0'; });
     });
     document.addEventListener('mouseenter', function () {
       cursorDot.style.opacity = '1';
       cursorRing.style.opacity = '1';
+      trail.forEach(function (d) { d.el.style.opacity = 0.5 - Array.prototype.indexOf.call(trail, d) * 0.08; });
     });
+  } else if (cursorDot && cursorRing) {
+    cursorDot.style.display = 'none';
+    cursorRing.style.display = 'none';
   }
+
+  /* ===============================
+     Mobile 100vh fix
+     =============================== */
+  (function () {
+    function setVh() {
+      var vh = window.innerHeight * 0.01;
+      document.documentElement.style.setProperty('--vh', vh + 'px');
+    }
+    setVh();
+    window.addEventListener('resize', setVh);
+  }());
 
   /* ===============================
      Particles (Hero)
@@ -70,12 +153,12 @@
   (function () {
     var container = document.querySelector('.hero-particles');
     if (!container) return;
-    var count = 20;
+    var count = window.innerWidth < 768 ? 10 : 20;
     for (var i = 0; i < count; i++) {
       var p = document.createElement('div');
       p.className = 'hero-particle';
       p.style.left = Math.random() * 100 + '%';
-      p.style.top = (80 + Math.random() * 30) + '%';
+      p.style.top = (70 + Math.random() * 40) + '%';
       p.style.animationDelay = (Math.random() * 6) + 's';
       p.style.animationDuration = (4 + Math.random() * 4) + 's';
       p.style.width = p.style.height = (2 + Math.random() * 4) + 'px';
@@ -94,14 +177,12 @@
     window.addEventListener('scroll', function () {
       var scrollY = window.scrollY;
 
-      /* scrolled background */
       if (scrollY > 60) {
         nav.classList.add('scrolled');
       } else {
         nav.classList.remove('scrolled');
       }
 
-      /* hide/show on scroll direction */
       if (scrollY > 200) {
         if (scrollY > lastScroll) {
           nav.classList.add('hidden');
@@ -130,7 +211,6 @@
       document.body.style.overflow = links.classList.contains('open') ? 'hidden' : '';
     });
 
-    /* close on link click */
     links.querySelectorAll('a').forEach(function (a) {
       a.addEventListener('click', function () {
         toggle.classList.remove('active');
@@ -161,7 +241,7 @@
   }());
 
   /* ===============================
-     Scroll Reveal (Intersection Observer)
+     Scroll Reveal
      =============================== */
   (function () {
     var reveals = document.querySelectorAll('.reveal');
@@ -183,7 +263,7 @@
   }());
 
   /* ===============================
-     Lightbox (Lookbook Gallery)
+     Lightbox
      =============================== */
   (function () {
     var lightbox = document.querySelector('.lightbox');
@@ -222,7 +302,7 @@
   }());
 
   /* ===============================
-     Smooth Scroll for Nav Links
+     Smooth Scroll
      =============================== */
   (function () {
     document.querySelectorAll('a[href^="#"]').forEach(function (a) {
@@ -252,11 +332,10 @@
       btn.innerHTML = 'Sending...';
       btn.disabled = true;
 
-      /* simulate send – replace with actual form action */
       setTimeout(function () {
         btn.innerHTML = 'Message Sent!';
-        btn.style.background = '#00C853';
-        btn.style.boxShadow = '0 4px 24px rgba(0, 200, 83, 0.3)';
+        btn.style.background = '#FFD700';
+        btn.style.boxShadow = '0 4px 24px rgba(255, 215, 0, 0.3)';
 
         setTimeout(function () {
           btn.innerHTML = originalText;
@@ -270,7 +349,7 @@
   }());
 
   /* ===============================
-     Parallax Effect (Hero)
+     Parallax (Hero)
      =============================== */
   (function () {
     var hero = document.querySelector('.hero');
