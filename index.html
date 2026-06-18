@@ -20,6 +20,7 @@
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="RAREHOOKS — Rare Since Day One">
   <meta name="twitter:description" content="Hand-crafted crochet caps. Limited drops. No restocks. Nairobi to the world.">
+  <meta name="twitter:image" content="https://aabyxfcrrqivjupawxdu.supabase.co/storage/v1/object/public/store-images/4aa43748-90b3-4c4b-b74f-d337ea5b63e1/a1b59555-a5c2-4397-b7de-7ff0cc0e8670/products/1780164202396.jpeg">
 
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -35,12 +36,13 @@
 <body>
 
   <!-- ================ PRELOADER ================ -->
-  <div class="preloader" role="status" aria-label="Loading">
+  <div class="preloader" id="preloader" role="status" aria-label="Loading">
     <div class="preloader-logo">RAREHOOKS</div>
     <div class="preloader-bar">
       <div class="preloader-bar-fill"></div>
     </div>
   </div>
+  <noscript><style>.preloader{display:none!important}html{scroll-behavior:auto}body{cursor:auto}</style></noscript>
 
   <!-- ================ CUSTOM CURSOR ================ -->
   <div class="cursor-dot" aria-hidden="true"></div>
@@ -100,8 +102,7 @@
     <div class="hero-cap-showcase" aria-hidden="true">
       <img src="https://aabyxfcrrqivjupawxdu.supabase.co/storage/v1/object/public/store-images/4aa43748-90b3-4c4b-b74f-d337ea5b63e1/a1b59555-a5c2-4397-b7de-7ff0cc0e8670/products/1780164202396.jpeg"
            alt="Featured cap"
-           class="hero-cap-img"
-           loading="lazy">
+           class="hero-cap-img">
     </div>
 
     <div class="hero-scroll-indicator" aria-hidden="true">
@@ -201,7 +202,7 @@
   </section>
 
   <!-- ================ ABOUT ================ -->
-  <section class="section section-full" id="about" aria-label="About the brand" style="background: linear-gradient(180deg, var(--color-black) 0%, var(--color-gray-dark) 100%);">
+  <section class="section-full" id="about" aria-label="About the brand" style="background: linear-gradient(180deg, var(--color-black) 0%, var(--color-gray-dark) 100%);">
     <div class="section" style="padding-top: 0; padding-bottom: 0;">
       <p class="section-label reveal">Story</p>
       <h2 class="section-title reveal reveal-delay-1">Who We Are</h2>
@@ -249,7 +250,7 @@
 
 
   <!-- ================ LOOKBOOK ================ -->
-  <section class="section section-full" id="lookbook" aria-label="Lookbook" style="background: var(--color-gray-dark);">
+  <section class="section-full" id="lookbook" aria-label="Lookbook" style="background: var(--color-gray-dark);">
     <div class="section" style="padding-top: 0; padding-bottom: 0;">
       <p class="section-label reveal">Lookbook</p>
       <h2 class="section-title reveal reveal-delay-1">As Seen On</h2>
@@ -336,7 +337,7 @@
   </section>
 
   <!-- ================ TESTIMONIALS ================ -->
-  <section class="section section-full" id="testimonials" aria-label="Testimonials" style="background: var(--color-gray-dark);">
+  <section class="section-full" id="testimonials" aria-label="Testimonials" style="background: var(--color-gray-dark);">
     <div class="section" style="padding-top: 0; padding-bottom: 0;">
       <p class="section-label reveal">Hear It</p>
       <h2 class="section-title reveal reveal-delay-1">From the Community</h2>
