@@ -3,7 +3,6 @@ import axios from 'axios';
 
 const router = Router();
 const PAYSTACK_SECRET = process.env.PAYSTACK_SECRET_KEY;
-const PAYSTACK_PUBLIC = process.env.PAYSTACK_PUBLIC_KEY;
 const BASE = 'https://api.paystack.co';
 
 router.post('/initialize-payment', async (req, res) => {
@@ -30,7 +29,7 @@ router.post('/initialize-payment', async (req, res) => {
       }
     );
 
-    res.json({ ...response.data, public_key: PAYSTACK_PUBLIC });
+    res.json(response.data);
   } catch (err) {
     console.error('Paystack init error:', err.response?.data || err.message);
     res.status(500).json({ error: 'Payment initialization failed' });

@@ -381,27 +381,8 @@
       })
         .then(function (r) { return r.json(); })
         .then(function (data) {
-          if (data.status && data.data) {
-            var handler = PaystackPop.setup({
-              key: data.public_key || 'pk_live_xxxxxxxxxxxxxxxx',
-              email: email,
-              amount: currentProduct.price * 100,
-              currency: 'KES',
-              ref: data.data.reference,
-              metadata: {
-                product_id: currentProduct.id,
-                product_name: currentProduct.name,
-              },
-              onClose: function () {
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = 'Pay Now <span class="btn-arrow">→</span>';
-              },
-              callback: function (response) {
-                submitBtn.innerHTML = 'Redirecting...';
-                window.location.href = '/payment-success.html?reference=' + response.reference + '&product=' + encodeURIComponent(currentProduct.name);
-              },
-            });
-            handler.openIframe();
+          if (data.status && data.data && data.data.authorization_url) {
+            window.location.href = data.data.authorization_url;
           } else {
             alert('Payment could not be initiated. Please try again.');
             submitBtn.disabled = false;
