@@ -699,7 +699,7 @@ ul {
 }
 
 /* =============================
-   ANIME GRAFFITI BG
+   ANIME GRAFFITI BG — PUNCHY
    ============================= */
 .anime-bg {
   position: relative;
@@ -711,57 +711,79 @@ ul {
   inset: 0;
   z-index: 0;
   pointer-events: none;
-  opacity: 0.04;
+  opacity: 0.09;
   background:
-    /* Manga speech bubble silhouette */
-    radial-gradient(ellipse 80px 60px at 15% 20%, var(--color-accent) 50%, transparent 50%),
-    radial-gradient(circle 30px at 25% 26%, var(--color-black) 50%, transparent 50%),
-    /* Speed lines — multiple angled lines */
+    /* Manga halftone dots — classic screen tone */
+    repeating-radial-gradient(
+      circle at 50% 50%,
+      var(--color-accent) 0.5px,
+      transparent 0.5px,
+      transparent 3px
+    ),
+    /* Impact star burst — top-right */
+    conic-gradient(from 0deg at 85% 12%,
+      transparent 0deg, var(--color-accent) 4deg, transparent 8deg,
+      transparent 52deg, var(--color-accent) 56deg, transparent 60deg,
+      transparent 112deg, var(--color-accent) 116deg, transparent 120deg,
+      transparent 172deg, var(--color-accent) 176deg, transparent 180deg,
+      transparent 232deg, var(--color-accent) 236deg, transparent 240deg,
+      transparent 292deg, var(--color-accent) 296deg, transparent 300deg
+    ),
+    /* Manga speech bubble silhouette — bottom-left */
+    radial-gradient(ellipse 140px 100px at 10% 80%, var(--color-accent) 45%, transparent 45%),
+    radial-gradient(circle 40px at 18% 72%, var(--color-black) 50%, transparent 50%),
+    /* Action / speed lines — explosive from center */
     repeating-linear-gradient(
-      70deg,
+      65deg,
       transparent 0px,
-      transparent 18px,
-      var(--color-accent) 18px,
-      var(--color-accent) 19px,
-      transparent 19px,
-      transparent 36px
+      transparent 14px,
+      var(--color-accent) 14px,
+      var(--color-accent) 15px,
+      transparent 15px,
+      transparent 28px
     ),
-    /* Star burst */
-    conic-gradient(from 0deg at 85% 15%,
-      transparent 0deg, var(--color-accent) 5deg, transparent 10deg,
-      transparent 60deg, var(--color-accent) 65deg, transparent 70deg,
-      transparent 120deg, var(--color-accent) 125deg, transparent 130deg,
-      transparent 180deg, var(--color-accent) 185deg, transparent 190deg,
-      transparent 240deg, var(--color-accent) 245deg, transparent 250deg,
-      transparent 300deg, var(--color-accent) 305deg, transparent 310deg
+    repeating-linear-gradient(
+      -55deg,
+      transparent 0px,
+      transparent 20px,
+      var(--color-accent) 20px,
+      var(--color-accent) 21px,
+      transparent 21px,
+      transparent 40px
     ),
-    /* Diagonal screen tone hatching */
+    /* Screen tone — tight diagonal hatch */
     repeating-linear-gradient(
       45deg,
       transparent 0px,
+      transparent 2px,
+      rgba(255, 215, 0, 0.5) 2px,
+      rgba(255, 215, 0, 0.5) 3px,
       transparent 3px,
-      rgba(255, 215, 0, 0.3) 3px,
-      rgba(255, 215, 0, 0.3) 4px,
-      transparent 4px,
-      transparent 8px
+      transparent 7px
     );
   background-size:
-    160px 120px,
     60px 60px,
-    140px 140px,
+    180px 180px,
+    280px 200px,
+    80px 80px,
+    160px 160px,
     200px 200px,
-    16px 16px;
+    14px 14px;
   background-repeat:
+    repeat,
+    no-repeat,
     no-repeat,
     no-repeat,
     repeat,
-    no-repeat,
+    repeat,
     repeat;
   background-position:
-    15% 20%,
-    25% 26%,
     0 0,
-    85% 15%,
+    85% 12%,
+    10% 80%,
+    18% 72%,
+    0 0,
+    0 0,
     0 0;
 }
 
@@ -771,43 +793,153 @@ ul {
   inset: 0;
   z-index: 0;
   pointer-events: none;
-  opacity: 0.025;
-  /* Second layer: different marks */
+  opacity: 0.055;
   background:
-    /* Large circular spray */
-    radial-gradient(circle 120px at 70% 80%, var(--color-accent) 30%, transparent 30%),
-    /* Small star/sparkle clusters */
-    radial-gradient(2px 2px at 30% 50%, var(--color-accent) 50%, transparent 50%),
-    radial-gradient(3px 3px at 33% 48%, var(--color-accent) 50%, transparent 50%),
-    radial-gradient(2px 2px at 27% 53%, var(--color-accent) 50%, transparent 50%),
-    /* Horizontal action lines */
+    /* Impact cloud / dust poof */
+    radial-gradient(ellipse 180px 140px at 75% 70%, var(--color-accent) 20%, transparent 20%),
+    radial-gradient(ellipse 100px 80px at 60% 75%, var(--color-accent) 25%, transparent 25%),
+    /* Small sparkle glints */
+    radial-gradient(2px 2px at 22% 30%, var(--color-accent) 50%, transparent 50%),
+    radial-gradient(3px 4px at 25% 28%, var(--color-accent) 50%, transparent 50%),
+    radial-gradient(2px 2px at 19% 33%, var(--color-accent) 50%, transparent 50%),
+    radial-gradient(2px 3px at 35% 25%, var(--color-accent) 50%, transparent 50%),
+    /* Manga speed scratch lines */
     repeating-linear-gradient(
-      0deg,
+      82deg,
       transparent 0px,
-      transparent 30px,
-      var(--color-accent) 30px,
-      var(--color-accent) 31px,
-      transparent 31px,
-      transparent 60px
+      transparent 8px,
+      var(--color-accent) 8px,
+      var(--color-accent) 8.5px,
+      transparent 8.5px,
+      transparent 24px
     );
   background-size:
-    240px 240px,
+    360px 280px,
+    200px 160px,
     4px 4px,
     6px 6px,
     4px 4px,
-    120px 120px;
+    5px 6px,
+    100px 100px;
   background-repeat:
+    no-repeat,
+    no-repeat,
     no-repeat,
     no-repeat,
     no-repeat,
     no-repeat,
     repeat;
   background-position:
-    70% 80%,
-    30% 50%,
-    33% 48%,
-    27% 53%,
+    75% 70%,
+    60% 75%,
+    22% 30%,
+    25% 28%,
+    19% 33%,
+    35% 25%,
     0 0;
+}
+
+/* Manga impact text — applied to section titles */
+.manga-impact {
+  position: relative;
+  text-shadow:
+    2px 0 var(--color-black),
+    -2px 0 var(--color-black),
+    0 2px var(--color-black),
+    0 -2px var(--color-black),
+    3px 3px 0 rgba(255, 215, 0, 0.3);
+  letter-spacing: 0.06em;
+}
+
+.section-title.manga-impact {
+  display: inline-block;
+}
+
+.manga-impact::after {
+  content: '';
+  position: absolute;
+  top: -8px;
+  right: -12px;
+  width: 24px;
+  height: 24px;
+  background:
+    conic-gradient(from 0deg,
+      transparent 0deg, var(--color-accent) 8deg, transparent 16deg,
+      transparent 44deg, var(--color-accent) 52deg, transparent 60deg
+    );
+  opacity: 0.7;
+  animation: manga-sparkle 1.5s ease-in-out infinite;
+}
+
+/* Anime sparkle glint on gold elements */
+@keyframes manga-sparkle {
+  0%, 100% { transform: scale(1) rotate(0deg); opacity: 0.7; }
+  50% { transform: scale(1.6) rotate(180deg); opacity: 0.2; }
+}
+
+@keyframes impact-reveal {
+  0% { opacity: 0; transform: scale(0.6) translateY(20px); clip-path: inset(0 0 100% 0); }
+  60% { transform: scale(1.05) translateY(-4px); }
+  100% { opacity: 1; transform: scale(1) translateY(0); clip-path: inset(0 0 0 0); }
+}
+
+@keyframes screen-shake {
+  0%, 100% { transform: translate(0, 0); }
+  15% { transform: translate(-3px, 2px); }
+  30% { transform: translate(3px, -1px); }
+  45% { transform: translate(-2px, 3px); }
+  60% { transform: translate(2px, -2px); }
+  75% { transform: translate(-1px, 1px); }
+}
+
+.reveal.visible.impact-in {
+  animation: impact-reveal 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Manga panel border */
+.work-card.anime-panel {
+  border: 3px solid var(--color-accent);
+  box-shadow:
+    6px 6px 0 var(--color-accent-dim),
+    0 0 0 1px var(--color-black);
+  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1),
+              box-shadow 0.4s var(--transition-smooth);
+}
+
+.work-card.anime-panel:hover {
+  transform: translate(-3px, -3px) scale(1.02);
+  box-shadow:
+    10px 10px 0 rgba(255, 215, 0, 0.25),
+    0 0 0 1px var(--color-black);
+}
+
+/* Manga action background stripe */
+.manga-stripe {
+  position: relative;
+  overflow: hidden;
+}
+
+.manga-stripe::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -60%;
+  width: 40%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 215, 0, 0.06),
+    transparent
+  );
+  transform: skewX(-20deg);
+  animation: stripe-sweep 4s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes stripe-sweep {
+  0% { left: -60%; }
+  100% { left: 120%; }
 }
 
 /* =============================
