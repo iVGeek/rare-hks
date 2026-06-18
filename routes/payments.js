@@ -12,6 +12,10 @@ router.post('/initialize-payment', async (req, res) => {
       return res.status(400).json({ error: 'Email and amount are required' });
     }
 
+    const baseUrl = req.headers['x-forwarded-proto']
+      ? `${req.headers['x-forwarded-proto']}://${req.get('host')}`
+      : `${req.protocol}://${req.get('host')}`;
+
     const response = await axios.post(
       `${BASE}/transaction/initialize`,
       {
@@ -19,7 +23,7 @@ router.post('/initialize-payment', async (req, res) => {
         amount: Math.round(amount * 100),
         currency: 'KES',
         metadata: { productId, productName, ...metadata },
-        callback_url: `${req.protocol}://${req.get('host')}/payment-success.html`,
+        callback_url: `${baseUrl}/payment-success.html`,
       },
       {
         headers: {

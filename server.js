@@ -11,6 +11,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 app.use(cors());
 app.use(express.json());
+app.set('trust proxy', true);
 app.use(express.static(path.join(__dirname)));
 
 app.use('/api', paymentRoutes);
