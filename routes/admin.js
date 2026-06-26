@@ -450,5 +450,5 @@ function registerOrder(order) {
   fallbackOrders.push(order);
 }
 
-export { registerOrder };
+export { registerOrder, getProducts, getAdmins };
 export default router;
