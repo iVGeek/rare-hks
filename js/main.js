@@ -241,26 +241,94 @@
   }());
 
   /* ===============================
-     Scroll Reveal
+     Product + Lookbook Renderer
      =============================== */
   (function () {
-    var reveals = document.querySelectorAll('.reveal');
-    if (!reveals.length) return;
+    var productsGrid = document.getElementById('productsGrid');
+    var lookbookGrid = document.getElementById('lookbookGrid');
+    if (!productsGrid && !lookbookGrid) return;
 
-    var observer = new IntersectionObserver(function (entries) {
-      entries.forEach(function (entry) {
-        if (entry.isIntersecting) {
-          entry.target.classList.add('visible');
-          observer.unobserve(entry.target);
-        }
+    function esc(s) {
+      if (s == null) return '';
+      var d = document.createElement('div');
+      d.textContent = s;
+      return d.innerHTML;
+    }
+
+    function renderProducts(products) {
+      var delays = ['', 'reveal-delay-1', 'reveal-delay-2', 'reveal-delay-3', 'reveal-delay-4'];
+
+      if (productsGrid) {
+        productsGrid.innerHTML = '';
+        products.forEach(function (p, i) {
+          var card = document.createElement('div');
+          card.className = 'work-card anime-panel reveal ' + (delays[i % delays.length] || '');
+          card.tabIndex = 0;
+          card.setAttribute('role', 'button');
+          card.setAttribute('aria-label', 'View ' + p.name + ' cap');
+          card.innerHTML =
+            '<img src="' + esc(p.image || '') + '" alt="' + esc(p.name) + ' crochet cap" class="work-card-img" loading="lazy">' +
+            '<div class="work-card-overlay">' +
+            '<span class="work-card-tag">' + esc(p.tag) + '</span>' +
+            '<h3 class="work-card-title">' + esc(p.name) + '</h3>' +
+            '<p class="work-card-desc">' + esc(p.description || '') + '</p>' +
+            '<p class="work-card-price">KES ' + p.price.toLocaleString() + '</p>' +
+            '<button class="btn btn-primary btn-buy" data-product-id="' + esc(p.id) + '" data-product-name="' + esc(p.name) + '" data-price="' + p.price + '">Buy Now</button>' +
+            '</div>';
+          productsGrid.appendChild(card);
+        });
+      }
+
+      if (lookbookGrid) {
+        lookbookGrid.innerHTML = '';
+        products.forEach(function (p, i) {
+          var item = document.createElement('div');
+          item.className = 'lookbook-item reveal ' + (delays[i % delays.length] || '');
+          item.tabIndex = 0;
+          item.setAttribute('role', 'button');
+          item.setAttribute('aria-label', 'View cap style');
+          item.innerHTML =
+            '<img src="' + esc(p.image || '') + '" alt="Cap look" class="lookbook-item-image" loading="lazy">' +
+            '<div class="lookbook-item-overlay"><span class="lookbook-item-label">' + esc(p.name) + '</span></div>';
+          lookbookGrid.appendChild(item);
+        });
+      }
+
+      observeReveals();
+    }
+
+    fetch('/api/products')
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        renderProducts(data);
+      })
+      .catch(function () {
+        renderProducts([
+          { id: 'jungle-green', name: 'Jungle Green', price: 2500, tag: 'Ready-Made', image: '', description: 'Deep green precision cap.' },
+        ]);
       });
-    }, {
-      threshold: 0.1,
-      rootMargin: '0px 0px -50px 0px'
-    });
-
-    reveals.forEach(function (el) { observer.observe(el); });
   }());
+
+  /* ===============================
+     Scroll Reveal
+     =============================== */
+  var revealObserver = null;
+  function observeReveals() {
+    var reveals = document.querySelectorAll('.reveal:not(.visible)');
+    if (!reveals.length) return;
+    if (!revealObserver) {
+      revealObserver = new IntersectionObserver(function (entries) {
+        entries.forEach(function (entry) {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('visible');
+            revealObserver.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
+    }
+    reveals.forEach(function (el) { revealObserver.observe(el); });
+  }
+  observeReveals();
 
   /* ===============================
      Lightbox
@@ -271,20 +339,20 @@
     var container = document.querySelector('.lightbox-content');
     if (!lightbox || !closeBtn || !container) return;
 
-    document.querySelectorAll('.lookbook-item').forEach(function (item) {
-      item.addEventListener('click', function () {
-        var img = item.querySelector('img');
-        if (img) {
-          container.innerHTML = '';
-          var clone = img.cloneNode(true);
-          clone.style.maxWidth = '90vw';
-          clone.style.maxHeight = '90vh';
-          clone.style.objectFit = 'contain';
-          container.appendChild(clone);
-          lightbox.classList.add('open');
-          document.body.style.overflow = 'hidden';
-        }
-      });
+    document.addEventListener('click', function (e) {
+      var item = e.target.closest('.lookbook-item');
+      if (!item) return;
+      var img = item.querySelector('img');
+      if (img) {
+        container.innerHTML = '';
+        var clone = img.cloneNode(true);
+        clone.style.maxWidth = '90vw';
+        clone.style.maxHeight = '90vh';
+        clone.style.objectFit = 'contain';
+        container.appendChild(clone);
+        lightbox.classList.add('open');
+        document.body.style.overflow = 'hidden';
+      }
     });
 
     function closeLightbox() {
@@ -377,15 +445,16 @@
       document.body.style.overflow = '';
     }
 
-    document.querySelectorAll('.btn-buy').forEach(function (btn) {
-      btn.addEventListener('click', function (e) {
+    document.addEventListener('click', function (e) {
+      var btn = e.target.closest('.btn-buy');
+      if (btn) {
         e.stopPropagation();
         openShippingModal({
           id: btn.dataset.productId,
           name: btn.dataset.productName,
           price: parseInt(btn.dataset.price, 10),
         });
-      });
+      }
     });
 
     shippingCloseBtn.addEventListener('click', closeShippingModal);

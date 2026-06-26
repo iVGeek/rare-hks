@@ -92,13 +92,14 @@ async function initDB() {
 
 const masterHash = process.env.ADMIN_PASSWORD_HASH || hashPassword('rarehooks2024');
 const fallbackAdmins = [{ id: 'master', username: 'master', password_hash: masterHash, role: 'superadmin', created_at: new Date().toISOString() }];
+const baseImg = 'https://aabyxfcrrqivjupawxdu.supabase.co/storage/v1/object/public/store-images/4aa43748-90b3-4c4b-b74f-d337ea5b63e1/a1b59555-a5c2-4397-b7de-7ff0cc0e8670/products';
 const fallbackProducts = [
-  { id: 'jungle-green', name: 'Jungle Green', price: 2500, currency: 'KES', tag: 'Ready-Made', stock: 10, image: '', description: '', created_at: new Date().toISOString() },
-  { id: 'blue-dream', name: 'Blue Dream', price: 2500, currency: 'KES', tag: 'Made to Order', stock: 5, image: '', description: '', created_at: new Date().toISOString() },
-  { id: 'cream-la', name: 'Cream LA', price: 2500, currency: 'KES', tag: 'Made to Order', stock: 5, image: '', description: '', created_at: new Date().toISOString() },
-  { id: 'pink-haze', name: 'Pink Haze', price: 2500, currency: 'KES', tag: 'Made to Order', stock: 5, image: '', description: '', created_at: new Date().toISOString() },
-  { id: 'bronx', name: 'Bronx', price: 2500, currency: 'KES', tag: 'Ready-Made', stock: 8, image: '', description: '', created_at: new Date().toISOString() },
-  { id: 'blood-blue', name: 'Blood & Blue', price: 4500, currency: 'KES', tag: 'Bundle', stock: 3, image: '', description: '', created_at: new Date().toISOString() },
+  { id: 'jungle-green', name: 'Jungle Green', price: 2500, currency: 'KES', tag: 'Ready-Made', stock: 10, image: baseImg + '/1780164202396.jpeg', description: 'Deep green precision cap with custom charm detail. Adjustable fit. NY edition.', created_at: new Date().toISOString() },
+  { id: 'blue-dream', name: 'Blue Dream', price: 2500, currency: 'KES', tag: 'Made to Order', stock: 5, image: baseImg + '/1780164297370.png', description: 'Clean blue build with signature charm. Adjustable. That West Coast energy.', created_at: new Date().toISOString() },
+  { id: 'cream-la', name: 'Cream LA', price: 2500, currency: 'KES', tag: 'Made to Order', stock: 5, image: baseImg + '/1780164466247.png', description: 'Neutral tone. Clean finish. Adjustable with charm detail. LA classic.', created_at: new Date().toISOString() },
+  { id: 'pink-haze', name: 'Pink Haze', price: 2500, currency: 'KES', tag: 'Made to Order', stock: 5, image: baseImg + '/1780250877970.jpeg', description: 'Bold pink statement cap with charm detail. Adjustable fit. NY edition.', created_at: new Date().toISOString() },
+  { id: 'bronx', name: 'Bronx', price: 2500, currency: 'KES', tag: 'Ready-Made', stock: 8, image: baseImg + '/1780930702522.png', description: 'Beige and navy. Clean build. Minimal. Straight out the borough.', created_at: new Date().toISOString() },
+  { id: 'blood-blue', name: 'Blood & Blue', price: 4500, currency: 'KES', tag: 'Bundle', stock: 3, image: baseImg + '/1780250840434.jpeg', description: 'Two-cap set. Red and blue builds with charm details. Double the drip.', created_at: new Date().toISOString() },
 ];
 const fallbackOrders = [];
 
