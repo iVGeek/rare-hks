@@ -64,6 +64,15 @@
       <a href="#lookbook">LOOKBOOK</a>
       <a href="#contact" class="nav-cta">SECURE</a>
     </div>
+
+    <button class="nav-cart" id="cartToggle" aria-label="Open cart">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/>
+        <line x1="3" y1="6" x2="21" y2="6"/>
+        <path d="M16 10a4 4 0 01-8 0"/>
+      </svg>
+      <span class="nav-cart-badge" id="cartBadge">0</span>
+    </button>
   </nav>
 
   <!-- ================ HERO ================ -->
@@ -324,6 +333,39 @@
     </svg>
   </button>
 
+  <!-- ================ CART SIDEBAR ================ -->
+  <div class="cart-overlay" id="cartOverlay"></div>
+  <div class="cart-sidebar" id="cartSidebar" role="dialog" aria-modal="true" aria-label="Shopping cart">
+    <div class="cart-header">
+      <h3 class="cart-title">Your Cart</h3>
+      <button class="cart-close" id="cartClose" aria-label="Close cart">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 5l10 10M15 5L5 15"/></svg>
+      </button>
+    </div>
+    <div class="cart-body" id="cartBody">
+      <div class="cart-empty" id="cartEmpty">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="1.5" stroke-linecap="round">
+          <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/>
+          <line x1="3" y1="6" x2="21" y2="6"/>
+          <path d="M16 10a4 4 0 01-8 0"/>
+        </svg>
+        <p>Your cart is empty</p>
+        <span>Browse the drop and add some caps</span>
+      </div>
+      <div class="cart-items" id="cartItems"></div>
+    </div>
+    <div class="cart-footer" id="cartFooter">
+      <div class="cart-total">
+        <span>Total</span>
+        <span id="cartTotal">KES 0</span>
+      </div>
+      <button class="btn btn-primary" id="cartCheckoutBtn" style="width:100%;justify-content:center;">
+        Checkout
+        <span class="btn-arrow">→</span>
+      </button>
+    </div>
+  </div>
+
   <!-- ================ SHIPPING MODAL ================ -->
   <div class="payment-modal" id="shippingModal" role="dialog" aria-modal="true" aria-label="Shipping Details">
     <div class="payment-modal-backdrop"></div>
@@ -342,10 +384,7 @@
       <h3 class="shipping-heading">Where to Ship</h3>
       <p class="shipping-subtitle">Drop your details and we'll handle the rest.</p>
 
-      <div class="shipping-product-badge">
-        <span class="shipping-product-label" id="shippingModalProduct"></span>
-        <span class="shipping-product-price" id="shippingModalPrice"></span>
-      </div>
+      <div class="cart-summary" id="cartSummary"></div>
 
       <form id="shippingForm" novalidate>
         <div class="shipping-section">
@@ -467,10 +506,7 @@
       <h3 class="shipping-heading" style="font-size:1.6rem;">Complete Payment</h3>
       <p class="shipping-subtitle">One last step — enter your email to check out securely.</p>
 
-      <div class="shipping-product-badge" style="margin-bottom:24px;">
-        <span class="shipping-product-label" id="paymentModalProduct"></span>
-        <span class="shipping-product-price" id="paymentModalPrice"></span>
-      </div>
+      <div class="cart-summary" id="paymentCartSummary"></div>
 
       <form id="paymentForm">
         <div class="shipping-field">

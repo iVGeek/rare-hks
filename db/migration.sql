@@ -17,13 +17,15 @@ CREATE TABLE IF NOT EXISTS products (
 -- Orders
 CREATE TABLE IF NOT EXISTS orders (
   id TEXT PRIMARY KEY,
-  product_id TEXT,
-  product_name TEXT,
+  product_id TEXT DEFAULT 'cart',
+  product_name TEXT DEFAULT 'Multi-item order',
+  items JSONB DEFAULT '[]',
   amount INTEGER,
   currency TEXT DEFAULT 'KES',
   payment_reference TEXT DEFAULT '',
   shipping JSONB DEFAULT '{}',
   status TEXT DEFAULT 'pending',
+  shipping_status TEXT DEFAULT 'Pending',
   admin_notes TEXT DEFAULT '',
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()

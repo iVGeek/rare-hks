@@ -86,6 +86,8 @@
     .badge.paid { background: rgba(0,200,83,0.15); color: #00c853; }
     .badge.pending { background: rgba(255,215,0,0.15); color: #FFD700; }
     .badge.shipped { background: rgba(33,150,243,0.15); color: #2196f3; }
+    .badge.processing { background: rgba(255,152,0,0.15); color: #ff9800; }
+    .badge.delivered { background: rgba(0,200,83,0.15); color: #00c853; }
     .badge.ready { background: rgba(255,215,0,0.15); color: #FFD700; }
     .badge.made { background: rgba(156,39,176,0.15); color: #9c27b0; }
     .badge.bundle { background: rgba(255,87,34,0.15); color: #ff5722; }
@@ -229,7 +231,7 @@
       <div class="table-wrap">
         <table>
           <thead>
-            <tr><th>Order ID</th><th>Customer</th><th>Product</th><th>Amount</th><th>Status</th><th>Date</th></tr>
+            <tr><th>Order ID</th><th>Customer</th><th>Items</th><th>Amount</th><th>Payment</th><th>Shipping</th><th>Date</th></tr>
           </thead>
           <tbody id="ordersTableBody"></tbody>
         </table>
@@ -578,25 +580,40 @@ function loadOrders() {
     if (!d.status) return;
     var html = '';
     if (d.orders.length === 0) {
-      html = '<tr><td colspan="6" class="empty">No orders yet</td></tr>';
+      html = '<tr><td colspan="7" class="empty">No orders yet</td></tr>';
     } else {
       d.orders.forEach(function (o) {
+        var items = o.items || [];
+        var itemsLabel = items.length > 0
+          ? items.map(function (i) { return esc(i.productName) + ' x' + (i.quantity || 1); }).join(', ')
+          : esc(o.product_name || '—');
         html += '<tr class="order-row" onclick="toggleOrderDetail(\'' + esc(o.id) + '\')">' +
           '<td style="font-family:monospace;font-size:0.75rem;color:#666;">' + esc(o.id) + '</td>' +
           '<td>' + esc(o.shipping?.name || '—') + '<br><span style="font-size:0.7rem;color:#555;">' + esc(o.shipping?.email || '') + '</span></td>' +
-          '<td>' + esc(o.productName || '—') + '</td>' +
+          '<td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + itemsLabel + '">' + itemsLabel + '</td>' +
           '<td style="color:#FFD700;">KES ' + (o.amount || 0).toLocaleString() + '</td>' +
           '<td><span class="badge ' + (o.status || 'pending') + '">' + esc(o.status || 'pending') + '</span></td>' +
-          '<td style="font-size:0.75rem;color:#666;">' + new Date(o.createdAt).toLocaleDateString() + '</td></tr>';
-        html += '<tr id="detail-' + esc(o.id) + '" style="display:none;"><td colspan="6"><div class="order-detail open">' +
-          '<strong>Phone:</strong> ' + esc(o.shipping?.phone || '—') + '<br>' +
+          '<td><span class="badge ' + ((o.shipping_status || 'Pending').toLowerCase().replace(/\s+/g, '-')) + '">' + esc(o.shipping_status || 'Pending') + '</span></td>' +
+          '<td style="font-size:0.75rem;color:#666;">' + new Date(o.created_at || o.createdAt).toLocaleDateString() + '</td></tr>';
+        html += '<tr id="detail-' + esc(o.id) + '" style="display:none;"><td colspan="7"><div class="order-detail open">' +
+          '<strong>Items:</strong><br>';
+        if (items.length > 0) {
+          items.forEach(function (i) {
+            html += '&nbsp;&nbsp;' + esc(i.productName) + ' x' + (i.quantity || 1) + ' — KES ' + ((i.price || 0) * (i.quantity || 1)).toLocaleString() + '<br>';
+          });
+        } else {
+          html += '&nbsp;&nbsp;' + esc(o.product_name || '—') + '<br>';
+        }
+        html += '<strong>Phone:</strong> ' + esc(o.shipping?.phone || '—') + '<br>' +
           '<strong>Address:</strong> ' + esc(o.shipping?.address || '—') + '<br>' +
           '<strong>City:</strong> ' + esc(o.shipping?.city || '—') + '<br>' +
           '<strong>Country:</strong> ' + esc(o.shipping?.country || '—') + '<br>' +
           '<strong>Postal Code:</strong> ' + esc(o.shipping?.postalCode || '—') + '<br>' +
           '<strong>Notes:</strong> ' + esc(o.shipping?.notes || '—') + '<br>' +
-          '<strong>Payment Ref:</strong> ' + esc(o.paymentReference || '—') + '<br>' +
-          '<strong>Ordered:</strong> ' + new Date(o.createdAt).toLocaleString() + '</div></td></tr>';
+          '<strong>Payment Ref:</strong> ' + esc(o.payment_reference || '—') + '<br>' +
+          '<strong>Ship Status:</strong> <span id="shipStatus-' + esc(o.id) + '">' + esc(o.shipping_status || 'Pending') + '</span>' +
+          ' <button onclick="updateShipStatus(\'' + esc(o.id) + '\')" style="font-size:0.7rem;padding:2px 8px;background:#333;color:#FFD700;border:none;border-radius:3px;cursor:pointer;">Update</button><br>' +
+          '<strong>Ordered:</strong> ' + new Date(o.created_at || o.createdAt).toLocaleString() + '</div></td></tr>';
       });
     }
     document.getElementById('ordersTableBody').innerHTML = html;
@@ -607,6 +624,16 @@ function loadOrders() {
 function toggleOrderDetail(id) {
   var row = document.getElementById('detail-' + id);
   if (row) row.style.display = row.style.display === 'none' ? 'table-row' : 'none';
+}
+
+function updateShipStatus(id) {
+  var statuses = ['Pending', 'Processing', 'Shipped', 'Delivered'];
+  var current = document.getElementById('shipStatus-' + id).textContent;
+  var next = statuses[(statuses.indexOf(current) + 1) % statuses.length];
+  if (!confirm('Update shipping status for ' + id + ' from "' + current + '" to "' + next + '"?')) return;
+  api('/orders/' + id, { method: 'PATCH', body: { status: undefined, shipping_status: next } }).then(function (d) {
+    if (d.status) loadOrders(); else alert(d.error || 'Failed');
+  });
 }
 
 /* ───── Messages ───── */

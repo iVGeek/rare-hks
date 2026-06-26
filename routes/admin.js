@@ -273,6 +273,7 @@ router.get('/orders', requireAuth, async (req, res) => {
 router.patch('/orders/:id', requireAuth, async (req, res) => {
   const updates = { updated_at: new Date().toISOString() };
   if (req.body.status) updates.status = req.body.status;
+  if (req.body.shipping_status) updates.shipping_status = req.body.shipping_status;
   if (req.body.notes) updates.admin_notes = req.body.notes;
 
   const result = await updateOrder(req.params.id, updates);
@@ -292,5 +293,52 @@ router.patch('/messages/:id/read', requireAuth, async (req, res) => {
   await markMessageRead(req.params.id);
   res.json({ status: true });
 });
+
+export { sendEmail };
+
+export async function sendOrderConfirmation(order) {
+  const items = order.items || [{ productName: order.product_name || 'Cap', price: order.amount, quantity: 1 }];
+  const itemsHtml = items.map(i =>
+    `<tr><td style="padding:6px 8px;border-bottom:1px solid #333;color:#ccc;">${i.productName || i.product_name}</td><td style="padding:6px 8px;border-bottom:1px solid #333;color:#888;text-align:center;">x${i.quantity || 1}</td><td style="padding:6px 8px;border-bottom:1px solid #333;color:#FFD700;text-align:right;">KES ${((i.price || 0) * (i.quantity || 1)).toLocaleString()}</td></tr>`
+  ).join('');
+
+  const shipping = order.shipping || {};
+  const html = `
+    <div style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:32px;background:#0A0A0A;color:#F7F7F7;border-radius:12px;border:1px solid rgba(255,215,0,0.12);">
+      <h1 style="color:#FFD700;font-size:1.8rem;margin:0 0 4px;font-weight:900;letter-spacing:0.02em;">RAREHOOKS</h1>
+      <p style="color:#888;margin:0 0 24px;">Order Confirmation</p>
+
+      <div style="background:#1A1A1A;border-radius:8px;padding:20px;margin-bottom:20px;">
+        <p style="color:#FFD700;font-size:1rem;margin:0 0 4px;">Order #${order.id}</p>
+        <p style="color:#555;font-size:0.8rem;margin:0;">Payment: <span style="color:${order.status === 'paid' ? '#00c853' : '#888'}">${(order.status || 'pending').toUpperCase()}</span></p>
+        <p style="color:#555;font-size:0.8rem;margin:4px 0 0;">Reference: ${order.payment_reference || '—'}</p>
+      </div>
+
+      <h3 style="color:#F7F7F7;font-size:0.9rem;margin:0 0 12px;">Items</h3>
+      <table style="width:100%;border-collapse:collapse;">
+        <thead><tr><th style="text-align:left;padding:6px 8px;color:#888;font-size:0.75rem;border-bottom:1px solid #444;">Item</th><th style="text-align:center;padding:6px 8px;color:#888;font-size:0.75rem;border-bottom:1px solid #444;">Qty</th><th style="text-align:right;padding:6px 8px;color:#888;font-size:0.75rem;border-bottom:1px solid #444;">Amount</th></tr></thead>
+        <tbody>${itemsHtml}</tbody>
+      </table>
+
+      <div style="border-top:1px solid rgba(255,215,0,0.1);margin-top:12px;padding-top:12px;text-align:right;font-size:1.1rem;font-weight:700;color:#FFD700;">Total: KES ${(order.amount || 0).toLocaleString()}</div>
+
+      <div style="background:#1A1A1A;border-radius:8px;padding:20px;margin:20px 0;">
+        <h3 style="color:#F7F7F7;font-size:0.9rem;margin:0 0 12px;">Shipping To</h3>
+        <p style="color:#ccc;margin:0;font-size:0.85rem;">${shipping.name || '—'}</p>
+        <p style="color:#888;margin:2px 0;font-size:0.85rem;">${shipping.address || ''}${shipping.city ? ', ' + shipping.city : ''}</p>
+        <p style="color:#888;margin:2px 0;font-size:0.85rem;">${shipping.country || ''}${shipping.postalCode ? ' · ' + shipping.postalCode : ''}</p>
+        <p style="color:#888;margin:2px 0;font-size:0.85rem;">${shipping.email || ''} ${shipping.phone ? ' · ' + shipping.phone : ''}</p>
+      </div>
+
+      <div style="background:rgba(255,215,0,0.05);border:1px solid rgba(255,215,0,0.1);border-radius:8px;padding:16px;margin-bottom:20px;">
+        <p style="color:#FFD700;font-size:0.85rem;font-weight:600;margin:0 0 4px;">Shipping Status: <span style="color:#888;">${order.shipping_status || 'Pending'}</span></p>
+        <p style="color:#555;font-size:0.8rem;margin:0;">We'll update this as soon as your order ships. You'll receive a notification with tracking details.</p>
+      </div>
+
+      <p style="color:#555;font-size:0.75rem;margin:0;text-align:center;">RAREHOOKS — Nairobi to the World · <a href="mailto:rarehooks@gmail.com" style="color:#FFD700;">rarehooks@gmail.com</a></p>
+    </div>`;
+
+  return sendEmail(shipping.email, `RAREHOOKS — Order Confirmation #${order.id}`, html);
+}
 
 export default router;

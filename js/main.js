@@ -241,6 +241,193 @@
   }());
 
   /* ===============================
+     Cart Module
+     =============================== */
+  var cart = (function () {
+    var KEY = 'rarehooks_cart';
+    var items = [];
+
+    function load() {
+      try {
+        var saved = localStorage.getItem(KEY);
+        items = saved ? JSON.parse(saved) : [];
+      } catch (e) { items = []; }
+    }
+
+    function save() {
+      try { localStorage.setItem(KEY, JSON.stringify(items)); } catch (e) {}
+    }
+
+    function getItems() { return items; }
+
+    function getCount() {
+      return items.reduce(function (sum, i) { return sum + i.quantity; }, 0);
+    }
+
+    function getTotal() {
+      return items.reduce(function (sum, i) { return sum + i.price * i.quantity; }, 0);
+    }
+
+    function add(product) {
+      var existing = null;
+      for (var i = 0; i < items.length; i++) {
+        if (items[i].id === product.id) { existing = items[i]; break; }
+      }
+      if (existing) {
+        existing.quantity += 1;
+      } else {
+        items.push({
+          id: product.id,
+          name: product.name,
+          price: product.price,
+          image: product.image || '',
+          quantity: 1,
+        });
+      }
+      save();
+      emitChange();
+    }
+
+    function remove(id) {
+      for (var i = 0; i < items.length; i++) {
+        if (items[i].id === id) { items.splice(i, 1); break; }
+      }
+      save();
+      emitChange();
+    }
+
+    function setQuantity(id, qty) {
+      if (qty < 1) { remove(id); return; }
+      for (var i = 0; i < items.length; i++) {
+        if (items[i].id === id) { items[i].quantity = qty; break; }
+      }
+      save();
+      emitChange();
+    }
+
+    function clear() {
+      items = [];
+      save();
+      emitChange();
+    }
+
+    var listeners = [];
+    function onChange(fn) { listeners.push(fn); }
+    function emitChange() {
+      for (var i = 0; i < listeners.length; i++) { listeners[i](items); }
+    }
+
+    load();
+    return { getItems: getItems, getCount: getCount, getTotal: getTotal, add: add, remove: remove, setQuantity: setQuantity, clear: clear, onChange: onChange };
+  }());
+
+  /* ===============================
+     Cart UI
+     =============================== */
+  (function () {
+    var sidebar = document.getElementById('cartSidebar');
+    var overlay = document.getElementById('cartOverlay');
+    var toggle = document.getElementById('cartToggle');
+    var close = document.getElementById('cartClose');
+    var body = document.getElementById('cartBody');
+    var itemsEl = document.getElementById('cartItems');
+    var emptyEl = document.getElementById('cartEmpty');
+    var footerEl = document.getElementById('cartFooter');
+    var totalEl = document.getElementById('cartTotal');
+    var badge = document.getElementById('cartBadge');
+    var checkoutBtn = document.getElementById('cartCheckoutBtn');
+
+    if (!sidebar) return;
+
+    function esc(s) {
+      if (s == null) return '';
+      var d = document.createElement('div');
+      d.textContent = s;
+      return d.innerHTML;
+    }
+
+    function openCart() {
+      sidebar.classList.add('open');
+      overlay.classList.add('open');
+      document.body.style.overflow = 'hidden';
+      renderCart();
+    }
+
+    function closeCart() {
+      sidebar.classList.remove('open');
+      overlay.classList.remove('open');
+      document.body.style.overflow = '';
+    }
+
+    function renderCart() {
+      var items = cart.getItems();
+      badge.textContent = cart.getCount();
+      badge.style.display = cart.getCount() > 0 ? 'flex' : 'none';
+
+      if (!sidebar.classList.contains('open')) return;
+
+      if (items.length === 0) {
+        itemsEl.style.display = 'none';
+        emptyEl.style.display = 'flex';
+        footerEl.style.display = 'none';
+      } else {
+        itemsEl.style.display = '';
+        emptyEl.style.display = 'none';
+        footerEl.style.display = '';
+        var html = '';
+        for (var i = 0; i < items.length; i++) {
+          var it = items[i];
+          var subtotal = it.price * it.quantity;
+          html += '<div class="cart-item" data-id="' + esc(it.id) + '">' +
+            '<img src="' + esc(it.image) + '" alt="' + esc(it.name) + '" class="cart-item-img" loading="lazy">' +
+            '<div class="cart-item-info">' +
+            '<div class="cart-item-name">' + esc(it.name) + '</div>' +
+            '<div class="cart-item-price">KES ' + it.price.toLocaleString() + '</div>' +
+            '<div class="cart-item-actions">' +
+            '<button class="cart-item-qty-btn" data-action="dec">-</button>' +
+            '<span class="cart-item-qty">' + it.quantity + '</span>' +
+            '<button class="cart-item-qty-btn" data-action="inc">+</button>' +
+            '<button class="cart-item-remove" data-action="remove">Remove</button>' +
+            '</div></div>' +
+            '<div class="cart-item-total">KES ' + subtotal.toLocaleString() + '</div>' +
+            '</div>';
+        }
+        itemsEl.innerHTML = html;
+        totalEl.textContent = 'KES ' + cart.getTotal().toLocaleString();
+      }
+    }
+
+    cart.onChange(renderCart);
+
+    toggle.addEventListener('click', openCart);
+    close.addEventListener('click', closeCart);
+    overlay.addEventListener('click', closeCart);
+
+    itemsEl.addEventListener('click', function (e) {
+      var btn = e.target.closest('[data-action]');
+      if (!btn) return;
+      var itemEl = btn.closest('.cart-item');
+      if (!itemEl) return;
+      var id = itemEl.dataset.id;
+      var action = btn.dataset.action;
+      if (action === 'inc') { cart.setQuantity(id, (cart.getItems().find(function (i) { return i.id === id; }) || {}).quantity + 1); }
+      else if (action === 'dec') { cart.setQuantity(id, (cart.getItems().find(function (i) { return i.id === id; }) || {}).quantity - 1); }
+      else if (action === 'remove') { cart.remove(id); }
+    });
+
+    checkoutBtn.addEventListener('click', function () {
+      closeCart();
+      var items = cart.getItems();
+      if (items.length === 0) return;
+      openShippingModalFromCart(items);
+    });
+
+    /* Sync badge on page load */
+    badge.textContent = cart.getCount();
+    badge.style.display = cart.getCount() > 0 ? 'flex' : 'none';
+  }());
+
+  /* ===============================
      Product + Lookbook Renderer
      =============================== */
   (function () {
@@ -273,7 +460,10 @@
             '<h3 class="work-card-title">' + esc(p.name) + '</h3>' +
             '<p class="work-card-desc">' + esc(p.description || '') + '</p>' +
             '<p class="work-card-price">KES ' + p.price.toLocaleString() + '</p>' +
+            '<div class="work-card-actions">' +
+            '<button class="btn-add-cart" data-product-id="' + esc(p.id) + '" data-product-name="' + esc(p.name) + '" data-price="' + p.price + '" data-image="' + esc(p.image || '') + '">Add to Cart</button>' +
             '<button class="btn btn-primary btn-buy" data-product-id="' + esc(p.id) + '" data-product-name="' + esc(p.name) + '" data-price="' + p.price + '">Buy Now</button>' +
+            '</div>' +
             '</div>';
           productsGrid.appendChild(card);
         });
@@ -307,6 +497,29 @@
           { id: 'jungle-green', name: 'Jungle Green', price: 2500, tag: 'Ready-Made', image: '', description: 'Deep green precision cap.' },
         ]);
       });
+
+    /* Add to Cart event delegation */
+    document.addEventListener('click', function (e) {
+      var btn = e.target.closest('.btn-add-cart');
+      if (!btn) return;
+      e.stopPropagation();
+      cart.add({
+        id: btn.dataset.productId,
+        name: btn.dataset.productName,
+        price: parseInt(btn.dataset.price, 10),
+        image: btn.dataset.image || '',
+      });
+      /* brief feedback */
+      var orig = btn.textContent;
+      btn.textContent = 'Added!';
+      btn.style.borderColor = '#FFD700';
+      btn.style.background = 'rgba(255,215,0,0.15)';
+      setTimeout(function () {
+        btn.textContent = orig;
+        btn.style.borderColor = '';
+        btn.style.background = '';
+      }, 800);
+    });
   }());
 
   /* ===============================
@@ -393,36 +606,58 @@
     var shippingModal = document.getElementById('shippingModal');
     var shippingCloseBtn = document.getElementById('shippingModalClose');
     var shippingForm = document.getElementById('shippingForm');
-    var shippingProductEl = document.getElementById('shippingModalProduct');
-    var shippingPriceEl = document.getElementById('shippingModalPrice');
+    var cartSummaryEl = document.getElementById('cartSummary');
     var shippingSubmitBtn = document.getElementById('shippingSubmitBtn');
 
     var paymentModal = document.getElementById('paymentModal');
     var paymentCloseBtn = document.getElementById('paymentModalClose');
     var paymentForm = document.getElementById('paymentForm');
     var paymentEmailInput = document.getElementById('payment-email');
-    var paymentProductEl = document.getElementById('paymentModalProduct');
-    var paymentPriceEl = document.getElementById('paymentModalPrice');
+    var paymentCartSummary = document.getElementById('paymentCartSummary');
     var paymentSubmitBtn = document.getElementById('paymentSubmitBtn');
-
     var paymentSubmitPrice = document.getElementById('paymentSubmitPrice');
 
-    var currentProduct = null;
+    var currentCart = null;
     var currentShipping = null;
-
     var paymentStepShipping = document.getElementById('paymentStepShipping');
 
     if (!shippingModal || !shippingForm || !paymentModal || !paymentForm) return;
 
-    function openShippingModal(product) {
-      currentProduct = product;
+    function esc(s) {
+      if (s == null) return '';
+      var d = document.createElement('div');
+      d.textContent = s;
+      return d.innerHTML;
+    }
+
+    function renderCartSummary(container, items, total) {
+      if (!container) return;
+      var html = '';
+      for (var i = 0; i < items.length; i++) {
+        var it = items[i];
+        var subtotal = it.price * (it.quantity || 1);
+        html += '<div class="cart-summary-item">' +
+          '<span><span class="cart-summary-name">' + esc(it.name) + '</span> <span class="cart-summary-qty">x' + (it.quantity || 1) + '</span></span>' +
+          '<span class="cart-summary-price">KES ' + subtotal.toLocaleString() + '</span>' +
+          '</div>';
+      }
+      html += '<div class="cart-summary-total"><span>Total</span><span>KES ' + total.toLocaleString() + '</span></div>';
+      container.innerHTML = html;
+    }
+
+    function openShippingModalFromCart(items) {
+      currentCart = items;
       currentShipping = null;
-      shippingProductEl.textContent = product.name;
-      shippingPriceEl.textContent = 'KES ' + product.price.toLocaleString() + ' / $' + (product.price / 130).toFixed(0);
+      var total = items.reduce(function (s, i) { return s + i.price * (i.quantity || 1); }, 0);
+      renderCartSummary(cartSummaryEl, items, total);
       shippingForm.reset();
       if (paymentStepShipping) paymentStepShipping.classList.remove('active');
       shippingModal.classList.add('open');
       document.body.style.overflow = 'hidden';
+    }
+
+    function openShippingModal(product) {
+      openShippingModalFromCart([{ id: product.id, name: product.name, price: product.price, quantity: 1, image: product.image || '' }]);
     }
 
     function closeShippingModal() {
@@ -431,10 +666,10 @@
     }
 
     function openPaymentModal() {
-      paymentProductEl.textContent = currentProduct.name;
-      paymentPriceEl.textContent = 'KES ' + currentProduct.price.toLocaleString() + ' / $' + (currentProduct.price / 130).toFixed(0);
+      var total = currentCart.reduce(function (s, i) { return s + i.price * (i.quantity || 1); }, 0);
+      renderCartSummary(paymentCartSummary, currentCart, total);
       paymentEmailInput.value = currentShipping?.email || '';
-      if (paymentSubmitPrice) paymentSubmitPrice.textContent = currentProduct.price.toLocaleString();
+      if (paymentSubmitPrice) paymentSubmitPrice.textContent = total.toLocaleString();
       if (paymentStepShipping) paymentStepShipping.classList.add('active');
       shippingModal.classList.remove('open');
       paymentModal.classList.add('open');
@@ -453,6 +688,7 @@
           id: btn.dataset.productId,
           name: btn.dataset.productName,
           price: parseInt(btn.dataset.price, 10),
+          image: btn.dataset.image || '',
         });
       }
     });
@@ -469,7 +705,7 @@
 
     shippingForm.addEventListener('submit', function (e) {
       e.preventDefault();
-      if (!currentProduct) return;
+      if (!currentCart || currentCart.length === 0) return;
 
       var shipping = {
         name: document.getElementById('shipping-name').value.trim(),
@@ -504,7 +740,7 @@
 
     paymentForm.addEventListener('submit', function (e) {
       e.preventDefault();
-      if (!currentProduct || !currentShipping) return;
+      if (!currentCart || currentCart.length === 0 || !currentShipping) return;
 
       var email = paymentEmailInput.value.trim();
       if (!email) return;
@@ -516,14 +752,21 @@
       if (payBtnText) payBtnText.textContent = 'Processing...';
       if (payBtnArrow) payBtnArrow.style.display = 'none';
 
+      var total = currentCart.reduce(function (s, i) { return s + i.price * (i.quantity || 1); }, 0);
+      var firstItem = currentCart[0];
+      var itemsPayload = currentCart.map(function (i) {
+        return { productId: i.id, productName: i.name, price: i.price, quantity: i.quantity || 1, image: i.image || '' };
+      });
+
       fetch('/api/initialize-payment', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           email: email,
-          amount: currentProduct.price,
-          productId: currentProduct.id,
-          productName: currentProduct.name,
+          amount: total,
+          productId: firstItem.id,
+          productName: firstItem.name,
+          metadata: { items: itemsPayload },
         }),
       })
         .then(function (r) { return r.json(); })
@@ -535,13 +778,15 @@
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
                 shipping: currentShipping,
-                productId: currentProduct.id,
-                productName: currentProduct.name,
-                amount: currentProduct.price,
+                items: itemsPayload,
+                productId: firstItem.id,
+                productName: firstItem.name,
+                amount: total,
                 currency: 'KES',
                 paymentReference: reference,
               }),
             }).then(function () {
+              cart.clear();
               window.location.href = data.data.authorization_url;
             });
           } else {

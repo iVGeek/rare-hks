@@ -6,7 +6,7 @@ import { fileURLToPath } from 'url';
 import { getProducts, addMessage, addOrder, waitForStore } from './db/store.js';
 import paymentRoutes from './routes/payments.js';
 import ordersRoutes from './routes/orders.js';
-import adminRoutes from './routes/admin.js';
+import adminRoutes, { sendOrderConfirmation } from './routes/admin.js';
 import uploadRoutes from './routes/upload.js';
 
 const app = express();
@@ -55,7 +55,7 @@ app.get('/api/products', async (_req, res) => {
 
 app.post('/api/create-order', async (req, res) => {
   try {
-    const { shipping, productId, productName, amount, currency, paymentReference } = req.body;
+    const { shipping, items, productId, productName, amount, currency, paymentReference } = req.body;
 
     if (!shipping || !shipping.name || !shipping.email || !shipping.phone || !shipping.address) {
       return res.status(400).json({ error: 'Shipping details incomplete' });
@@ -64,19 +64,29 @@ app.post('/api/create-order', async (req, res) => {
     const orderId = 'ORD-' + Date.now().toString(36).toUpperCase() + '-' + Math.random().toString(36).substring(2, 6).toUpperCase();
     const order = {
       id: orderId,
-      product_id: productId,
-      product_name: productName,
+      product_id: productId || 'cart',
+      product_name: productName || 'Multi-item order',
+      items: items || [],
       amount,
       currency: currency || 'KES',
       payment_reference: paymentReference || '',
       shipping,
       status: paymentReference ? 'paid' : 'pending',
+      shipping_status: 'Pending',
       admin_notes: '',
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };
 
     await addOrder(order);
+
+    /* Send confirmation email (non-blocking) */
+    sendOrderConfirmation(order).then(sent => {
+      console.log(`Order ${orderId}: confirmation email ${sent ? 'sent' : 'not sent (Gmail not configured)'}`);
+    }).catch(err => {
+      console.error(`Order ${orderId}: email error:`, err.message);
+    });
+
     console.log('Order created:', orderId);
     res.json({ status: true, orderId, order });
   } catch (err) {
