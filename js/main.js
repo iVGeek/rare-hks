@@ -246,6 +246,23 @@
   }());
 
   /* ===============================
+     Toast notification
+     =============================== */
+  function showToast(msg, icon) {
+    var el = document.getElementById('cartToast');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'cartToast';
+      el.className = 'cart-toast';
+      document.body.appendChild(el);
+    }
+    el.innerHTML = '<span class="cart-toast-icon">' + (icon || '✓') + '</span> ' + msg;
+    el.classList.add('show');
+    clearTimeout(el._hide);
+    el._hide = setTimeout(function () { el.classList.remove('show'); }, 2200);
+  }
+
+  /* ===============================
      Cart Module
      =============================== */
   var cart = (function () {
@@ -291,6 +308,7 @@
       }
       save();
       emitChange();
+      showToast(product.name + ' added to cart', '＋');
     }
 
     function remove(id) {
@@ -351,6 +369,13 @@
       return d.innerHTML;
     }
 
+    function bumpBadge() {
+      badge.classList.remove('bump');
+      void badge.offsetWidth;
+      badge.classList.add('bump');
+      setTimeout(function () { badge.classList.remove('bump'); }, 400);
+    }
+
     function openCart() {
       sidebar.classList.add('open');
       overlay.classList.add('open');
@@ -368,8 +393,11 @@
 
     function renderCart() {
       var items = cart.getItems();
-      badge.textContent = cart.getCount();
-      badge.style.display = cart.getCount() > 0 ? 'flex' : 'none';
+      var count = cart.getCount();
+      badge.textContent = count;
+      badge.style.display = count > 0 ? 'flex' : 'none';
+      var countLabel = document.getElementById('cartCountLabel');
+      if (countLabel) countLabel.textContent = count;
 
       if (!sidebar.classList.contains('open')) return;
 
@@ -385,22 +413,26 @@
         for (var i = 0; i < items.length; i++) {
           var it = items[i];
           var subtotal = it.price * it.quantity;
-          html += '<div class="cart-item" data-id="' + esc(it.id) + '">' +
-            '<img src="' + esc(it.image) + '" alt="' + esc(it.name) + '" class="cart-item-img" loading="lazy">' +
+          html += '<div class="cart-item" data-id="' + esc(it.id) + '" style="animation-delay:' + (i * 0.04) + 's">' +
+            '<div class="cart-item-img-wrap">' +
+            '<img src="' + esc(it.image || '') + '" alt="' + esc(it.name) + '" class="cart-item-img" loading="lazy">' +
+            '</div>' +
             '<div class="cart-item-info">' +
             '<div class="cart-item-name">' + esc(it.name) + '</div>' +
             '<div class="cart-item-price">KES ' + it.price.toLocaleString() + '</div>' +
             '<div class="cart-item-actions">' +
-            '<button class="cart-item-qty-btn" data-action="dec">-</button>' +
+            '<button class="cart-item-qty-btn" data-action="dec">−</button>' +
             '<span class="cart-item-qty">' + it.quantity + '</span>' +
             '<button class="cart-item-qty-btn" data-action="inc">+</button>' +
-            '<button class="cart-item-remove" data-action="remove">Remove</button>' +
+            '<button class="cart-item-remove" data-action="remove" aria-label="Remove">' +
+            '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M4 6h12"/><path d="M8 6V4a1 1 0 011-1h2a1 1 0 011 1v2"/><path d="M6 6l1 11h6l1-11"/></svg>' +
+            '</button>' +
             '</div></div>' +
             '<div class="cart-item-total">KES ' + subtotal.toLocaleString() + '</div>' +
             '</div>';
         }
         itemsEl.innerHTML = html;
-        totalEl.textContent = 'KES ' + cart.getTotal().toLocaleString();
+        totalEl.innerHTML = '<span class="cart-total-label">Total</span><span class="cart-total-amount">KES ' + cart.getTotal().toLocaleString() + '</span>';
       }
     }
 
@@ -417,7 +449,7 @@
       if (!itemEl) return;
       var id = itemEl.dataset.id;
       var action = btn.dataset.action;
-      if (action === 'inc') { cart.setQuantity(id, (cart.getItems().find(function (i) { return i.id === id; }) || {}).quantity + 1); }
+      if (action === 'inc') { cart.setQuantity(id, (cart.getItems().find(function (i) { return i.id === id; }) || {}).quantity + 1); bumpBadge(); }
       else if (action === 'dec') { cart.setQuantity(id, (cart.getItems().find(function (i) { return i.id === id; }) || {}).quantity - 1); }
       else if (action === 'remove') { cart.remove(id); }
     });
@@ -432,8 +464,11 @@
     });
 
     /* Sync badge on page load */
-    badge.textContent = cart.getCount();
-    badge.style.display = cart.getCount() > 0 ? 'flex' : 'none';
+    var initCount = cart.getCount();
+    badge.textContent = initCount;
+    badge.style.display = initCount > 0 ? 'flex' : 'none';
+    var countLabel = document.getElementById('cartCountLabel');
+    if (countLabel) countLabel.textContent = initCount;
   }());
 
   /* ===============================
@@ -518,16 +553,22 @@
         price: parseInt(btn.dataset.price, 10),
         image: btn.dataset.image || '',
       });
-      /* brief feedback */
-      var orig = btn.textContent;
-      btn.textContent = 'Added!';
-      btn.style.borderColor = '#FFD700';
-      btn.style.background = 'rgba(255,215,0,0.15)';
+      /* bump badge */
+      var badge = document.getElementById('cartBadge');
+      if (badge) {
+        badge.classList.remove('bump');
+        void badge.offsetWidth;
+        badge.classList.add('bump');
+        setTimeout(function () { badge.classList.remove('bump'); }, 400);
+      }
+      /* brief button feedback */
+      btn.classList.add('added');
+      var orig = btn.innerHTML;
+      btn.innerHTML = '<span style="font-size:0.85rem;">✓</span> Added';
       setTimeout(function () {
-        btn.textContent = orig;
-        btn.style.borderColor = '';
-        btn.style.background = '';
-      }, 800);
+        btn.classList.remove('added');
+        btn.innerHTML = orig;
+      }, 900);
     });
   }());
 
@@ -646,7 +687,9 @@
         var it = items[i];
         var subtotal = it.price * (it.quantity || 1);
         html += '<div class="cart-summary-item">' +
-          '<span><span class="cart-summary-name">' + esc(it.name) + '</span> <span class="cart-summary-qty">x' + (it.quantity || 1) + '</span></span>' +
+          '<div style="display:flex;align-items:center;gap:8px;">' +
+          '<img src="' + esc(it.image || '') + '" alt="" style="width:32px;height:32px;border-radius:6px;object-fit:cover;background:#1A1A1A;flex-shrink:0;" loading="lazy">' +
+          '<span><span class="cart-summary-name">' + esc(it.name) + '</span> <span class="cart-summary-qty">x' + (it.quantity || 1) + '</span></span></div>' +
           '<span class="cart-summary-price">KES ' + subtotal.toLocaleString() + '</span>' +
           '</div>';
       }
