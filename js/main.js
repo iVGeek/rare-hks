@@ -463,6 +463,36 @@
       }
     });
 
+    /* Continue Shopping button closes cart */
+    var continueBtn = document.getElementById('cartContinueBtn');
+    if (continueBtn) {
+      continueBtn.addEventListener('click', function () {
+        closeCart();
+        /* Scroll to products section */
+        var productsSection = document.getElementById('products');
+        if (productsSection) {
+          var offset = 80;
+          var top = productsSection.getBoundingClientRect().top + window.scrollY - offset;
+          window.scrollTo({ top: top, behavior: 'smooth' });
+        }
+      });
+    }
+
+    /* Browse Caps link in empty state goes to products */
+    var browseLink = document.getElementById('cartBrowseLink');
+    if (browseLink) {
+      browseLink.addEventListener('click', function (e) {
+        e.preventDefault();
+        closeCart();
+        var productsSection = document.getElementById('products');
+        if (productsSection) {
+          var offset = 80;
+          var top = productsSection.getBoundingClientRect().top + window.scrollY - offset;
+          window.scrollTo({ top: top, behavior: 'smooth' });
+        }
+      });
+    }
+
     /* Sync badge on page load */
     var initCount = cart.getCount();
     badge.textContent = initCount;
@@ -486,10 +516,30 @@
       return d.innerHTML;
     }
 
+    function renderProductCard(p) {
+      var cartQty = getCartItemCount(p.name);
+      var cartBadgeHtml = cartQty > 0
+        ? '<span class="card-cart-badge">' + cartQty + ' in cart</span>'
+        : '';
+      return cartBadgeHtml +
+        '<img src="' + esc(p.image || '') + '" alt="' + esc(p.name) + ' crochet cap" class="work-card-img" loading="lazy">' +
+        '<div class="work-card-overlay">' +
+        '<span class="work-card-tag">' + esc(p.tag) + '</span>' +
+        '<h3 class="work-card-title">' + esc(p.name) + '</h3>' +
+        '<p class="work-card-desc">' + esc(p.description || '') + '</p>' +
+        '<p class="work-card-price">KES ' + p.price.toLocaleString() + '</p>' +
+        '<div class="work-card-actions">' +
+        '<button class="btn-add-cart" data-product-id="' + esc(p.id) + '" data-product-name="' + esc(p.name) + '" data-price="' + p.price + '" data-image="' + esc(p.image || '') + '">Add to Cart</button>' +
+        '<button class="btn btn-primary btn-buy" data-product-id="' + esc(p.id) + '" data-product-name="' + esc(p.name) + '" data-price="' + p.price + '">Buy Now</button>' +
+        '</div>' +
+        '</div>';
+    }
+
     function renderProducts(products) {
       var delays = ['', 'reveal-delay-1', 'reveal-delay-2', 'reveal-delay-3', 'reveal-delay-4'];
 
       if (productsGrid) {
+        productsGrid._products = products;
         productsGrid.innerHTML = '';
         products.forEach(function (p, i) {
           var card = document.createElement('div');
@@ -497,18 +547,7 @@
           card.tabIndex = 0;
           card.setAttribute('role', 'button');
           card.setAttribute('aria-label', 'View ' + p.name + ' cap');
-          card.innerHTML =
-            '<img src="' + esc(p.image || '') + '" alt="' + esc(p.name) + ' crochet cap" class="work-card-img" loading="lazy">' +
-            '<div class="work-card-overlay">' +
-            '<span class="work-card-tag">' + esc(p.tag) + '</span>' +
-            '<h3 class="work-card-title">' + esc(p.name) + '</h3>' +
-            '<p class="work-card-desc">' + esc(p.description || '') + '</p>' +
-            '<p class="work-card-price">KES ' + p.price.toLocaleString() + '</p>' +
-            '<div class="work-card-actions">' +
-            '<button class="btn-add-cart" data-product-id="' + esc(p.id) + '" data-product-name="' + esc(p.name) + '" data-price="' + p.price + '" data-image="' + esc(p.image || '') + '">Add to Cart</button>' +
-            '<button class="btn btn-primary btn-buy" data-product-id="' + esc(p.id) + '" data-product-name="' + esc(p.name) + '" data-price="' + p.price + '">Buy Now</button>' +
-            '</div>' +
-            '</div>';
+          card.innerHTML = renderProductCard(p);
           productsGrid.appendChild(card);
         });
       }
@@ -541,6 +580,32 @@
           { id: 'jungle-green', name: 'Jungle Green', price: 2500, tag: 'Ready-Made', image: '', description: 'Deep green precision cap.' },
         ]);
       });
+
+    /* Re-render cards to update "x in cart" badge when cart changes */
+    cart.onChange(function () {
+      var cards = productsGrid ? productsGrid.querySelectorAll('.work-card') : [];
+      var productsData = productsGrid ? productsGrid._products : [];
+      if (cards.length && productsData.length) {
+        for (var ci = 0; ci < cards.length && ci < productsData.length; ci++) {
+          var pData = productsData[ci];
+          var card = cards[ci];
+          var cartQty = getCartItemCount(pData.name);
+          var badgeEl = card.querySelector('.card-cart-badge');
+          if (cartQty > 0) {
+            if (badgeEl) {
+              badgeEl.textContent = cartQty + ' in cart';
+            } else {
+              var newBadge = document.createElement('span');
+              newBadge.className = 'card-cart-badge';
+              newBadge.textContent = cartQty + ' in cart';
+              card.insertBefore(newBadge, card.firstChild);
+            }
+          } else if (badgeEl) {
+            badgeEl.remove();
+          }
+        }
+      }
+    });
 
     /* Add to Cart event delegation */
     document.addEventListener('click', function (e) {

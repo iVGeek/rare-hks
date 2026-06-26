@@ -1403,6 +1403,13 @@ select.shipping-input {
   object-fit: cover;
   transition: transform 0.8s var(--transition-smooth);
 }
+.card-cart-badge {
+  position: absolute; top: 10px; left: 10px;
+  background: rgba(0,0,0,0.7); color: #FFD700;
+  font-size: 0.65rem; font-weight: 600; padding: 3px 10px;
+  border-radius: 12px; border: 1px solid rgba(255,215,0,0.15);
+  pointer-events: none; z-index: 2;
+}
 
 .work-card:hover .work-card-img {
   transform: scale(1.05);
@@ -2260,6 +2267,13 @@ select.shipping-input {
 .cart-empty-icon svg { width: 28px; height: 28px; }
 .cart-empty p { font-size: 1rem; color: #888; margin-bottom: 4px; font-weight: 600; }
 .cart-empty span { font-size: 0.8rem; color: #555; }
+.cart-browse-link {
+  display: inline-block; margin-top: 14px; padding: 8px 20px;
+  background: rgba(255,215,0,0.08); color: #FFD700; border-radius: 4px;
+  font-size: 0.78rem; font-weight: 600; letter-spacing: 0.03em;
+  transition: background 0.2s; cursor: pointer; border: none; text-decoration: none;
+}
+.cart-browse-link:hover { background: rgba(255,215,0,0.18); }
 
 .cart-items { padding: 0; }
 
@@ -2332,6 +2346,15 @@ select.shipping-input {
   width: 100%; justify-content: center; padding: 14px;
   font-size: 0.8rem; position: relative; overflow: hidden;
 }
+.cart-continue-btn {
+  display: block; width: 100%; text-align: center;
+  margin-top: 10px; padding: 10px;
+  background: none; border: none; color: #666;
+  font-size: 0.78rem; cursor: pointer;
+  transition: color 0.2s; text-decoration: underline;
+  text-underline-offset: 3px; text-decoration-color: rgba(255,255,255,0.08);
+}
+.cart-continue-btn:hover { color: #ccc; }
 #cartCheckoutBtn::before {
   content: ''; position: absolute; inset: 0;
   background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);

@@ -3,7 +3,7 @@ import express from 'express';
 import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { getProducts, addMessage, addOrder, waitForStore } from './db/store.js';
+import { getProducts, addMessage, addOrder, getOrders, updateOrder, waitForStore } from './db/store.js';
 import paymentRoutes from './routes/payments.js';
 import ordersRoutes from './routes/orders.js';
 import adminRoutes, { sendOrderConfirmation } from './routes/admin.js';
@@ -71,7 +71,7 @@ app.post('/api/create-order', async (req, res) => {
       currency: currency || 'KES',
       payment_reference: paymentReference || '',
       shipping,
-      status: paymentReference ? 'paid' : 'pending',
+      status: 'pending',
       shipping_status: 'Pending',
       admin_notes: '',
       created_at: new Date().toISOString(),
@@ -79,19 +79,53 @@ app.post('/api/create-order', async (req, res) => {
     };
 
     await addOrder(order);
-
-    /* Send confirmation email (non-blocking) */
-    sendOrderConfirmation(order).then(sent => {
-      console.log(`Order ${orderId}: confirmation email ${sent ? 'sent' : 'not sent (Gmail not configured)'}`);
-    }).catch(err => {
-      console.error(`Order ${orderId}: email error:`, err.message);
-    });
-
-    console.log('Order created:', orderId);
+    console.log('Order created:', orderId, '(pending payment)');
     res.json({ status: true, orderId, order });
   } catch (err) {
     console.error('Create order error:', err);
     res.status(500).json({ error: 'Failed to create order' });
+  }
+});
+
+/* ───── Confirm payment after Paystack redirect ───── */
+
+app.post('/api/confirm-payment', async (req, res) => {
+  try {
+    const { reference } = req.body;
+    if (!reference) return res.status(400).json({ error: 'Payment reference required' });
+
+    const PAYSTACK_SECRET = process.env.PAYSTACK_SECRET_KEY;
+    const paystackRes = await fetch(`https://api.paystack.co/transaction/verify/${reference}`, {
+      headers: { Authorization: `Bearer ${PAYSTACK_SECRET}` },
+    });
+    const paystackData = await paystackRes.json();
+
+    if (!paystackData.status || paystackData.data.status !== 'success') {
+      return res.json({ status: false, error: 'Payment not confirmed', paystack: paystackData });
+    }
+
+    /* Find order by payment_reference */
+    const allOrders = await getOrders();
+    const order = allOrders.find(o => o.payment_reference === reference);
+    if (!order) {
+      return res.json({ status: false, error: 'Order not found' });
+    }
+
+    /* Update order to paid */
+    await updateOrder(order.id, { status: 'paid', updated_at: new Date().toISOString() });
+    order.status = 'paid';
+
+    /* Send confirmation email (non-blocking) */
+    sendOrderConfirmation(order).then(sent => {
+      console.log(`Payment confirmed for ${order.id}: email ${sent ? 'sent' : 'not sent (Gmail not configured)'}`);
+    }).catch(err => {
+      console.error(`Order ${order.id}: email error:`, err.message);
+    });
+
+    res.json({ status: true, orderId: order.id, order });
+  } catch (err) {
+    console.error('Confirm payment error:', err);
+    res.status(500).json({ error: 'Payment confirmation failed' });
   }
 });
 

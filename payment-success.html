@@ -7,83 +7,203 @@
   <meta name="robots" content="noindex">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
       font-family: 'Inter', sans-serif;
       background: #0A0A0A;
       color: #F7F7F7;
+      min-height: 100vh;
       display: flex;
       align-items: center;
       justify-content: center;
-      min-height: 100vh;
       padding: 24px;
-      text-align: center;
     }
     .card {
-      max-width: 460px;
-      padding: 48px 32px;
+      width: 100%; max-width: 500px;
       background: #1A1A1A;
       border-radius: 16px;
-      border: 1px solid rgba(255, 215, 0, 0.12);
+      border: 1px solid rgba(255,215,0,0.1);
+      overflow: hidden;
+    }
+    .card-header {
+      padding: 40px 32px 24px;
+      text-align: center;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
     }
     .checkmark {
-      width: 64px;
-      height: 64px;
-      border-radius: 50%;
-      background: rgba(255, 215, 0, 0.15);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin: 0 auto 24px;
-      font-size: 2rem;
-      color: #FFD700;
+      width: 56px; height: 56px; border-radius: 50%;
+      background: rgba(0,200,83,0.12);
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 16px;
     }
+    .checkmark svg { width: 24px; height: 24px; stroke: #00c853; }
     h1 {
       font-family: 'Bebas Neue', sans-serif;
-      font-size: 2.8rem;
-      letter-spacing: 0.04em;
-      margin-bottom: 12px;
-      color: #FFD700;
+      font-size: 2.4rem; letter-spacing: 0.04em;
+      color: #FFD700; margin-bottom: 6px;
     }
-    p {
-      color: #888;
-      line-height: 1.8;
-      margin-bottom: 32px;
-      font-size: 0.95rem;
+    .card-header p { color: #888; font-size: 0.85rem; line-height: 1.6; }
+    .order-number {
+      display: inline-block;
+      background: rgba(255,215,0,0.06);
+      color: #FFD700; font-size: 0.75rem;
+      padding: 4px 14px; border-radius: 20px;
+      margin-top: 8px; font-weight: 600;
+    }
+    .card-body { padding: 24px 32px; }
+    .section-title {
+      font-size: 0.75rem; color: #666; text-transform: uppercase;
+      letter-spacing: 0.1em; margin-bottom: 12px; font-weight: 600;
+    }
+    .item-row {
+      display: flex; align-items: center; gap: 12px;
+      padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.04);
+    }
+    .item-row:last-of-type { border-bottom: none; }
+    .item-img {
+      width: 44px; height: 44px; border-radius: 8px; object-fit: cover;
+      background: #111; flex-shrink: 0;
+    }
+    .item-info { flex: 1; min-width: 0; }
+    .item-name { font-size: 0.85rem; font-weight: 600; color: #F7F7F7; }
+    .item-qty { font-size: 0.75rem; color: #666; }
+    .item-price { font-size: 0.85rem; color: #FFD700; font-weight: 600; white-space: nowrap; }
+    .total-row {
+      display: flex; justify-content: space-between;
+      padding-top: 12px; margin-top: 4px;
+      border-top: 1px solid rgba(255,215,0,0.1);
+      font-size: 1rem; font-weight: 700;
+    }
+    .total-row span:last-child { color: #FFD700; font-size: 1.1rem; }
+    .shipping-box {
+      background: rgba(255,255,255,0.02); border-radius: 8px;
+      padding: 16px; margin-top: 16px;
+    }
+    .shipping-box p { font-size: 0.82rem; color: #ccc; line-height: 1.7; }
+    .shipping-box strong { color: #888; font-weight: 500; }
+    .status-row {
+      display: flex; gap: 12px; margin-top: 20px;
+    }
+    .status-bubble {
+      flex: 1; text-align: center; padding: 10px 8px;
+      border-radius: 8px; background: rgba(255,255,255,0.03);
+    }
+    .status-bubble-label { font-size: 0.6rem; color: #666; text-transform: uppercase; letter-spacing: 0.08em; }
+    .status-bubble-value { font-size: 0.85rem; font-weight: 600; margin-top: 2px; }
+    .status-bubble-value.paid { color: #00c853; }
+    .status-bubble-value.pending { color: #888; }
+    .card-footer {
+      padding: 20px 32px 32px;
+      text-align: center;
     }
     .btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 14px 32px;
-      background: #FFD700;
-      color: #0A0A0A;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-      font-size: 0.85rem;
-      border-radius: 4px;
-      text-decoration: none;
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 14px 32px; background: #FFD700; color: #0A0A0A;
+      font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em;
+      font-size: 0.85rem; border-radius: 4px; text-decoration: none;
       transition: transform 0.3s ease;
     }
     .btn:hover { transform: translateY(-2px); }
-    .ref { font-size: 0.75rem; color: #555; margin-top: 16px; }
+    .ref { font-size: 0.7rem; color: #444; margin-top: 16px; }
+    .loading { text-align: center; padding: 60px 20px; color: #666; }
+    .loading span { animation: pulse 1s ease infinite; }
+    @keyframes pulse { 0%,100% { opacity: 0.3; } 50% { opacity: 1; } }
   </style>
 </head>
 <body>
-  <div class="card">
-    <div class="checkmark">&#10003;</div>
-    <h1>Payment Successful!</h1>
-    <p>Your order has been received. We'll reach out to confirm shipping details within 24 hours. Nairobi to the world.</p>
-    <a href="/" class="btn">Back to Home</a>
-    <p class="ref" id="ref"></p>
+  <div class="card" id="mainCard">
+    <div class="card-header">
+      <div class="checkmark"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></div>
+      <h1>Payment Confirmed!</h1>
+      <p>Your order is locked in. We'll ship it out soon.</p>
+      <div class="order-number" id="orderIdDisplay"></div>
+    </div>
+    <div class="card-body">
+      <div id="orderItems"></div>
+      <div class="shipping-box" id="shippingDisplay">
+        <p><strong>Shipping to</strong><br><span id="shipName"></span><br><span id="shipAddress"></span><br><span id="shipContact"></span></p>
+      </div>
+      <div class="status-row">
+        <div class="status-bubble"><div class="status-bubble-label">Payment</div><div class="status-bubble-value paid" id="paymentStatus">Paid ✓</div></div>
+        <div class="status-bubble"><div class="status-bubble-label">Shipping</div><div class="status-bubble-value pending" id="shippingStatus">Pending</div></div>
+      </div>
+    </div>
+    <div class="card-footer">
+      <a href="/" class="btn">Continue Shopping →</a>
+      <p class="ref" id="ref"></p>
+    </div>
+  </div>
+  <div class="card" id="loadingCard" style="display:none;">
+    <div class="loading"><span>Confirming payment...</span></div>
   </div>
   <script>
-    var params = new URLSearchParams(window.location.search);
-    var ref = params.get('reference');
-    if (ref) document.getElementById('ref').textContent = 'Ref: ' + ref;
+    (function () {
+      var mainCard = document.getElementById('mainCard');
+      var loadingCard = document.getElementById('loadingCard');
+      var ref = new URLSearchParams(window.location.search).get('reference');
+
+      if (!ref) {
+        if (loadingCard) loadingCard.style.display = 'none';
+        if (mainCard) mainCard.style.display = '';
+        return;
+      }
+
+      document.getElementById('ref').textContent = 'Ref: ' + ref;
+      if (mainCard) mainCard.style.display = 'none';
+      if (loadingCard) loadingCard.style.display = '';
+
+      fetch('/api/confirm-payment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reference: ref }),
+      })
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+          if (loadingCard) loadingCard.style.display = 'none';
+          if (mainCard) mainCard.style.display = '';
+
+          if (!d.status || !d.order) {
+            document.getElementById('orderIdDisplay').textContent = '—';
+            return;
+          }
+          var o = d.order;
+          document.getElementById('orderIdDisplay').textContent = '#' + (o.id || '—');
+
+          /* Items */
+          var items = o.items || [];
+          var itemsHtml = '';
+          if (items.length > 0) {
+            itemsHtml += '<div class="section-title">Items</div>';
+            items.forEach(function (it) {
+              var subtotal = (it.price || 0) * (it.quantity || 1);
+              itemsHtml += '<div class="item-row">' +
+                '<img src="' + (it.image || '') + '" alt="" class="item-img" loading="lazy">' +
+                '<div class="item-info"><div class="item-name">' + (it.productName || 'Cap') + '</div><div class="item-qty">x' + (it.quantity || 1) + '</div></div>' +
+                '<div class="item-price">KES ' + subtotal.toLocaleString() + '</div></div>';
+            });
+            itemsHtml += '<div class="total-row"><span>Total</span><span>KES ' + (o.amount || 0).toLocaleString() + '</span></div>';
+          } else {
+            itemsHtml += '<div class="item-row"><div class="item-info"><div class="item-name">' + (o.product_name || 'Cap') + '</div></div><div class="item-price">KES ' + (o.amount || 0).toLocaleString() + '</div></div>';
+          }
+          document.getElementById('orderItems').innerHTML = itemsHtml;
+
+          /* Shipping */
+          var s = o.shipping || {};
+          document.getElementById('shipName').textContent = s.name || '—';
+          document.getElementById('shipAddress').textContent = (s.address || '') + (s.city ? ', ' + s.city : '') + (s.country ? ', ' + s.country : '');
+          document.getElementById('shipContact').textContent = (s.email || '') + (s.phone ? ' · ' + s.phone : '');
+
+          /* Status bubbles */
+          document.getElementById('paymentStatus').textContent = o.status === 'paid' ? 'Paid ✓' : 'Pending';
+          document.getElementById('shippingStatus').textContent = o.shipping_status || 'Pending';
+        })
+        .catch(function () {
+          if (loadingCard) loadingCard.style.display = 'none';
+          if (mainCard) mainCard.style.display = '';
+        });
+    })();
   </script>
 </body>
 </html>
