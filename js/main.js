@@ -31,9 +31,9 @@
     let mouseX = 0, mouseY = 0;
     let ringX = 0, ringY = 0;
 
-    /* trail: create trailing dots */
+    /* trail: create trailing dots — fewer on small screens */
     var trail = [];
-    var trailCount = 5;
+    var trailCount = window.innerWidth < 768 ? 2 : 5;
     var trailContainer = document.createElement('div');
     trailContainer.className = 'cursor-trail';
     trailContainer.setAttribute('aria-hidden', 'true');
@@ -42,7 +42,8 @@
     for (var t = 0; t < trailCount; t++) {
       var dot = document.createElement('div');
       dot.className = 'cursor-trail-dot';
-      dot.style.cssText = 'position:fixed;width:4px;height:4px;background:var(--color-accent,gold);border-radius:50%;pointer-events:none;z-index:9998;opacity:' + (0.5 - t * 0.08) + ';transform:translate(-50%,-50%);transition:opacity 0.3s';
+      var dotOpacity = window.innerWidth < 768 ? 0.4 - t * 0.12 : 0.5 - t * 0.08;
+      dot.style.cssText = 'position:fixed;width:4px;height:4px;background:var(--color-accent,gold);border-radius:50%;pointer-events:none;z-index:9998;opacity:' + Math.max(0.1, dotOpacity) + ';transform:translate(-50%,-50%);transition:opacity 0.3s';
       trailContainer.appendChild(dot);
       trail.push({ el: dot, x: 0, y: 0 });
     }
@@ -113,9 +114,9 @@
       el.addEventListener('mouseleave', function () {
         cursorRing.classList.remove('hovering');
         trail.forEach(function (d) {
-          /* restore original opacity based on index */
           var idx = Array.prototype.indexOf.call(trail, d);
-          d.el.style.opacity = 0.5 - idx * 0.08;
+          var baseOpacity = window.innerWidth < 768 ? 0.4 : 0.5;
+          d.el.style.opacity = Math.max(0.1, baseOpacity - idx * (window.innerWidth < 768 ? 0.12 : 0.08));
         });
       });
     });
@@ -128,7 +129,11 @@
     document.addEventListener('mouseenter', function () {
       cursorDot.style.opacity = '1';
       cursorRing.style.opacity = '1';
-      trail.forEach(function (d) { d.el.style.opacity = 0.5 - Array.prototype.indexOf.call(trail, d) * 0.08; });
+      trail.forEach(function (d) {
+        var idx = Array.prototype.indexOf.call(trail, d);
+        var baseOpacity = window.innerWidth < 768 ? 0.4 : 0.5;
+        d.el.style.opacity = Math.max(0.1, baseOpacity - idx * (window.innerWidth < 768 ? 0.12 : 0.08));
+      });
     });
   } else if (cursorDot && cursorRing) {
     cursorDot.style.display = 'none';
@@ -350,6 +355,7 @@
       sidebar.classList.add('open');
       overlay.classList.add('open');
       document.body.style.overflow = 'hidden';
+      if (typeof lenis !== 'undefined') lenis.stop();
       renderCart();
     }
 
@@ -357,6 +363,7 @@
       sidebar.classList.remove('open');
       overlay.classList.remove('open');
       document.body.style.overflow = '';
+      if (typeof lenis !== 'undefined') lenis.start();
     }
 
     function renderCart() {
@@ -419,7 +426,9 @@
       closeCart();
       var items = cart.getItems();
       if (items.length === 0) return;
-      openShippingModalFromCart(items);
+      if (typeof window.openShippingModalFromCart === 'function') {
+        window.openShippingModalFromCart(items);
+      }
     });
 
     /* Sync badge on page load */
@@ -645,7 +654,7 @@
       container.innerHTML = html;
     }
 
-    function openShippingModalFromCart(items) {
+    window.openShippingModalFromCart = function (items) {
       currentCart = items;
       currentShipping = null;
       var total = items.reduce(function (s, i) { return s + i.price * (i.quantity || 1); }, 0);
@@ -654,7 +663,8 @@
       if (paymentStepShipping) paymentStepShipping.classList.remove('active');
       shippingModal.classList.add('open');
       document.body.style.overflow = 'hidden';
-    }
+      if (typeof lenis !== 'undefined') lenis.stop();
+    };
 
     function openShippingModal(product) {
       openShippingModalFromCart([{ id: product.id, name: product.name, price: product.price, quantity: 1, image: product.image || '' }]);
@@ -663,6 +673,7 @@
     function closeShippingModal() {
       shippingModal.classList.remove('open');
       document.body.style.overflow = '';
+      if (typeof lenis !== 'undefined') lenis.start();
     }
 
     function openPaymentModal() {
@@ -678,6 +689,7 @@
     function closePaymentModal() {
       paymentModal.classList.remove('open');
       document.body.style.overflow = '';
+      if (typeof lenis !== 'undefined') lenis.start();
     }
 
     document.addEventListener('click', function (e) {
@@ -868,19 +880,20 @@
   /* ===============================
      Smooth Scroll (Lenis)
      =============================== */
-  if (typeof Lenis !== 'undefined' && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-    var lenis = new Lenis({
+  var lenis = null;
+  if (typeof Lenis !== 'undefined' && !window.matchMedia('(prefers-reduced-motion: reduce)').matches && !isTouch) {
+    lenis = new Lenis({
       duration: 0.6,
       easing: function (t) { return 1 - Math.pow(1 - t, 3); },
       orientation: 'vertical',
       smoothWheel: true,
-      wheelMultiplier: 1.2,
-      touchMultiplier: 0.5,
+      wheelMultiplier: 1.0,
+      touchMultiplier: 0,
       infinite: false,
     });
 
     function raf(time) {
-      lenis.raf(time);
+      if (lenis) lenis.raf(time);
       requestAnimationFrame(raf);
     }
     requestAnimationFrame(raf);
