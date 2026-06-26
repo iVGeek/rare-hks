@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import crypto from 'crypto';
+import nodemailer from 'nodemailer';
 import supabase from '../db/supabase.js';
 
 const router = Router();
@@ -15,6 +16,40 @@ function generateToken() {
 function generateId() {
   return Date.now().toString(36) + Math.random().toString(36).substring(2, 6);
 }
+
+function generateCode() {
+  return Math.floor(100000 + Math.random() * 900000).toString();
+}
+
+/* ───── Email transport ───── */
+
+function createTransporter() {
+  const user = process.env.GMAIL_USER;
+  const pass = process.env.GMAIL_APP_PASSWORD;
+  if (!user || !pass || pass === 'your_gmail_app_password_here') return null;
+  return nodemailer.createTransport({
+    service: 'gmail',
+    auth: { user, pass },
+  });
+}
+
+async function sendEmail(to, subject, html) {
+  const transporter = createTransporter();
+  if (!transporter) {
+    console.log(`[EMAIL] To: ${to} | Subject: ${subject} | Body: ${html.replace(/<[^>]*>/g, ' ').trim().substring(0, 200)}`);
+    return false;
+  }
+  try {
+    await transporter.sendMail({ from: `"RAREHOOKS Admin" <${process.env.GMAIL_USER}>`, to, subject, html });
+    return true;
+  } catch (err) {
+    console.error('Email send error:', err.message);
+    return false;
+  }
+}
+
+/* ───── In-memory password reset store ───── */
+const resetCodes = new Map(); // email -> { code, expiresAt }
 
 const sessions = new Map();
 
@@ -138,6 +173,94 @@ router.post('/logout', requireAuth, (req, res) => {
   const token = req.headers['x-admin-token'] || req.query.token;
   sessions.delete(token);
   res.json({ status: true });
+});
+
+/* ───── Forgot / Reset Password ───── */
+
+const RESET_CODE_TTL = 15 * 60 * 1000; // 15 minutes
+
+router.post('/forgot-password', async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ error: 'Email required' });
+
+    const code = generateCode();
+    resetCodes.set(email, { code, expiresAt: Date.now() + RESET_CODE_TTL });
+
+    const html = `
+      <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px;background:#0A0A0A;color:#F7F7F7;border-radius:12px;border:1px solid rgba(255,215,0,0.15);">
+        <h1 style="color:#FFD700;font-size:1.5rem;margin:0 0 8px;">RAREHOOKS</h1>
+        <p style="color:#888;margin:0 0 24px;">Password Reset Code</p>
+        <div style="background:#1A1A1A;border-radius:8px;padding:24px;text-align:center;">
+          <p style="color:#888;margin:0 0 8px;">Your verification code</p>
+          <div style="font-size:2.5rem;font-weight:700;letter-spacing:0.2em;color:#FFD700;font-family:monospace;">${code}</div>
+          <p style="color:#555;font-size:0.8rem;margin:16px 0 0;">Expires in 15 minutes</p>
+        </div>
+        <p style="color:#555;font-size:0.75rem;margin-top:24px;">If you didn't request this, ignore this email.</p>
+      </div>`;
+
+    const sent = await sendEmail(email, 'RAREHOOKS — Password Reset Code', html);
+
+    res.json({
+      status: true,
+      message: sent ? 'Code sent to email' : 'Email not configured — code shown below',
+      ...(sent ? {} : { devCode: code }),
+    });
+  } catch (err) {
+    console.error('Forgot password error:', err);
+    res.status(500).json({ error: 'Failed to send code' });
+  }
+});
+
+router.post('/reset-password', async (req, res) => {
+  try {
+    const { email, code, newPassword } = req.body;
+    if (!email || !code || !newPassword) return res.status(400).json({ error: 'Email, code, and new password required' });
+    if (newPassword.length < 6) return res.status(400).json({ error: 'Password must be at least 6 characters' });
+
+    const stored = resetCodes.get(email);
+    if (!stored) return res.status(400).json({ error: 'No code requested for this email' });
+    if (Date.now() > stored.expiresAt) {
+      resetCodes.delete(email);
+      return res.status(400).json({ error: 'Code expired — request a new one' });
+    }
+    if (stored.code !== code) return res.status(400).json({ error: 'Invalid code' });
+
+    resetCodes.delete(email);
+
+    const hashed = hashPassword(newPassword);
+    let updated = false;
+
+    if (dbReady) {
+      const { error } = await supabase.from('admin_accounts').update({ password_hash: hashed }).eq('username', 'master');
+      if (!error) updated = true;
+    }
+
+    if (!updated) {
+      const idx = fallbackAdmins.findIndex(a => a.id === 'master');
+      if (idx !== -1) {
+        fallbackAdmins[idx].password_hash = hashed;
+        updated = true;
+      }
+    }
+
+    if (!updated) return res.status(500).json({ error: 'Failed to update password' });
+
+    const confirmHtml = `
+      <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px;background:#0A0A0A;color:#F7F7F7;border-radius:12px;border:1px solid rgba(0,200,83,0.15);">
+        <h1 style="color:#FFD700;font-size:1.5rem;margin:0 0 8px;">RAREHOOKS</h1>
+        <p style="color:#00c853;margin:0 0 24px;">Password Reset Successful</p>
+        <div style="background:#1A1A1A;border-radius:8px;padding:24px;">
+          <p style="color:#ccc;margin:0;">Your admin password has been changed. If you did not make this change, please contact support immediately.</p>
+        </div>
+      </div>`;
+
+    sendEmail(email, 'RAREHOOKS — Password Changed', confirmHtml);
+    res.json({ status: true, message: 'Password reset successful' });
+  } catch (err) {
+    console.error('Reset password error:', err);
+    res.status(500).json({ error: 'Failed to reset password' });
+  }
 });
 
 /* ───── Accounts ───── */

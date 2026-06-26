@@ -163,6 +163,28 @@
     <input type="password" id="loginPassword" placeholder="Password" autocomplete="off">
     <div class="error" id="loginError">Invalid credentials</div>
     <button onclick="login()">Login</button>
+    <div style="text-align:center;margin-top:16px;">
+      <a href="#" onclick="openForgotPassword();return false" style="color:#666;font-size:0.8rem;text-decoration:none;">Forgot Password?</a>
+    </div>
+  </div>
+</div>
+
+<!-- Forgot Password Modal -->
+<div class="modal" id="forgotPwModal">
+  <div class="modal-box" style="max-width:400px;">
+    <h2>Reset Password</h2>
+    <div id="fpStep1">
+      <div class="form-group"><label>Admin Email</label><input type="email" id="fpEmail" value="ianvincent916@gmail.com" placeholder="your@email.com"></div>
+      <div class="modal-actions"><button class="save" onclick="sendResetCode()">Send Code</button><button class="cancel" onclick="closeModal('forgotPwModal')">Cancel</button></div>
+    </div>
+    <div id="fpStep2" style="display:none;">
+      <p style="font-size:0.85rem;color:#888;margin-bottom:16px;">Enter the 6-digit code sent to your email</p>
+      <div class="form-group"><label>Verification Code</label><input type="text" id="fpCode" placeholder="000000" maxlength="6" style="font-size:1.5rem;letter-spacing:0.3em;text-align:center;font-family:monospace;"></div>
+      <div class="form-group"><label>New Password</label><input type="password" id="fpNewPw" placeholder="Min 6 characters"></div>
+      <div class="form-group"><label>Confirm Password</label><input type="password" id="fpConfirmPw" placeholder="Repeat new password"></div>
+      <div class="error" id="fpError" style="margin-bottom:12px;"></div>
+      <div class="modal-actions"><button class="save" onclick="submitNewPassword()">Reset Password</button><button class="cancel" onclick="closeModal('forgotPwModal')">Cancel</button></div>
+    </div>
   </div>
 </div>
 
@@ -345,6 +367,77 @@ function logout() {
     document.getElementById('dashboard').style.display = 'none';
     document.getElementById('loginPassword').value = '';
     document.getElementById('loginError').style.display = 'none';
+  });
+}
+
+/* ───── Forgot Password ───── */
+
+function openForgotPassword() {
+  document.getElementById('fpStep1').style.display = 'block';
+  document.getElementById('fpStep2').style.display = 'none';
+  document.getElementById('fpCode').value = '';
+  document.getElementById('fpNewPw').value = '';
+  document.getElementById('fpConfirmPw').value = '';
+  document.getElementById('fpError').style.display = 'none';
+  document.getElementById('forgotPwModal').classList.add('open');
+}
+
+function sendResetCode() {
+  var email = document.getElementById('fpEmail').value.trim();
+  if (!email) { document.getElementById('fpError').textContent = 'Enter your email'; document.getElementById('fpError').style.display = 'block'; return; }
+  var btn = document.querySelector('#fpStep1 .save');
+  btn.disabled = true; btn.textContent = 'Sending...';
+  document.getElementById('fpError').style.display = 'none';
+  fetch('/api/admin/forgot-password', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email: email }),
+  }).then(function (r) { return r.json(); }).then(function (d) {
+    btn.disabled = false; btn.textContent = 'Send Code';
+    if (d.status) {
+      document.getElementById('fpStep1').style.display = 'none';
+      document.getElementById('fpStep2').style.display = 'block';
+      if (d.message.indexOf('console') > -1) alert('Email not configured. Check the server console for the code.');
+    } else {
+      document.getElementById('fpError').textContent = d.error || 'Failed to send code';
+      document.getElementById('fpError').style.display = 'block';
+    }
+  }).catch(function () {
+    btn.disabled = false; btn.textContent = 'Send Code';
+    document.getElementById('fpError').textContent = 'Connection error';
+    document.getElementById('fpError').style.display = 'block';
+  });
+}
+
+function submitNewPassword() {
+  var email = document.getElementById('fpEmail').value.trim();
+  var code = document.getElementById('fpCode').value.trim();
+  var newPw = document.getElementById('fpNewPw').value;
+  var confirmPw = document.getElementById('fpConfirmPw').value;
+  if (!code || code.length < 6) { document.getElementById('fpError').textContent = 'Enter the 6-digit code'; document.getElementById('fpError').style.display = 'block'; return; }
+  if (!newPw || newPw.length < 6) { document.getElementById('fpError').textContent = 'Password must be at least 6 characters'; document.getElementById('fpError').style.display = 'block'; return; }
+  if (newPw !== confirmPw) { document.getElementById('fpError').textContent = 'Passwords do not match'; document.getElementById('fpError').style.display = 'block'; return; }
+  var btn = document.querySelector('#fpStep2 .save');
+  btn.disabled = true; btn.textContent = 'Resetting...';
+  document.getElementById('fpError').style.display = 'none';
+  fetch('/api/admin/reset-password', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email: email, code: code, newPassword: newPw }),
+  }).then(function (r) { return r.json(); }).then(function (d) {
+    btn.disabled = false; btn.textContent = 'Reset Password';
+    if (d.status) {
+      closeModal('forgotPwModal');
+      alert('Password reset successful! Log in with your new password.');
+      document.getElementById('loginPassword').focus();
+    } else {
+      document.getElementById('fpError').textContent = d.error || 'Failed to reset';
+      document.getElementById('fpError').style.display = 'block';
+    }
+  }).catch(function () {
+    btn.disabled = false; btn.textContent = 'Reset Password';
+    document.getElementById('fpError').textContent = 'Connection error';
+    document.getElementById('fpError').style.display = 'block';
   });
 }
 
