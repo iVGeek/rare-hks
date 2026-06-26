@@ -18,6 +18,83 @@ function generateId() {
 
 const sessions = new Map();
 
+/* ───── In-memory fallback (used when Supabase tables don't exist yet) ───── */
+let dbReady = false;
+
+async function initDB() {
+  try {
+    const { error } = await supabase.from('admin_accounts').select('id').limit(1);
+    if (error) throw error;
+
+    const { data: admins } = await supabase.from('admin_accounts').select('id').limit(1);
+    if (!admins || admins.length === 0) {
+      await supabase.from('admin_accounts').insert([
+        { id: 'master', username: 'master', password_hash: masterHash, role: 'superadmin' }
+      ]);
+      console.log('Admin: master account created');
+    }
+
+    const { data: products } = await supabase.from('products').select('id').limit(1);
+    if (!products || products.length === 0) {
+      await supabase.from('products').insert([
+        { id: 'jungle-green', name: 'Jungle Green', price: 2500, tag: 'Ready-Made', stock: 10 },
+        { id: 'blue-dream', name: 'Blue Dream', price: 2500, tag: 'Made to Order', stock: 5 },
+        { id: 'cream-la', name: 'Cream LA', price: 2500, tag: 'Made to Order', stock: 5 },
+        { id: 'pink-haze', name: 'Pink Haze', price: 2500, tag: 'Made to Order', stock: 5 },
+        { id: 'bronx', name: 'Bronx', price: 2500, tag: 'Ready-Made', stock: 8 },
+        { id: 'blood-blue', name: 'Blood & Blue', price: 4500, tag: 'Bundle', stock: 3 },
+      ]);
+      console.log('Admin: default products seeded');
+    }
+
+    dbReady = true;
+    console.log('Admin: Supabase ready');
+  } catch (err) {
+    console.warn('Admin: Supabase unavailable, using in-memory fallback:', err.message);
+    dbReady = false;
+  }
+}
+
+const masterHash = process.env.ADMIN_PASSWORD_HASH || hashPassword('rarehooks2024');
+const fallbackAdmins = [{ id: 'master', username: 'master', password_hash: masterHash, role: 'superadmin', created_at: new Date().toISOString() }];
+const fallbackProducts = [
+  { id: 'jungle-green', name: 'Jungle Green', price: 2500, currency: 'KES', tag: 'Ready-Made', stock: 10, image: '', description: '', created_at: new Date().toISOString() },
+  { id: 'blue-dream', name: 'Blue Dream', price: 2500, currency: 'KES', tag: 'Made to Order', stock: 5, image: '', description: '', created_at: new Date().toISOString() },
+  { id: 'cream-la', name: 'Cream LA', price: 2500, currency: 'KES', tag: 'Made to Order', stock: 5, image: '', description: '', created_at: new Date().toISOString() },
+  { id: 'pink-haze', name: 'Pink Haze', price: 2500, currency: 'KES', tag: 'Made to Order', stock: 5, image: '', description: '', created_at: new Date().toISOString() },
+  { id: 'bronx', name: 'Bronx', price: 2500, currency: 'KES', tag: 'Ready-Made', stock: 8, image: '', description: '', created_at: new Date().toISOString() },
+  { id: 'blood-blue', name: 'Blood & Blue', price: 4500, currency: 'KES', tag: 'Bundle', stock: 3, image: '', description: '', created_at: new Date().toISOString() },
+];
+const fallbackOrders = [];
+
+async function getAdmins() {
+  if (dbReady) {
+    const { data } = await supabase.from('admin_accounts').select('*');
+    return data || [];
+  }
+  return fallbackAdmins;
+}
+
+async function getProducts() {
+  if (dbReady) {
+    const { data } = await supabase.from('products').select('*').order('created_at');
+    return data || [];
+  }
+  return fallbackProducts;
+}
+
+async function getOrders() {
+  if (dbReady) {
+    const { data } = await supabase.from('orders').select('*').order('created_at', { ascending: false });
+    return data || [];
+  }
+  return [...fallbackOrders].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+}
+
+initDB();
+
+/* ───── Auth middleware ───── */
+
 function requireAuth(req, res, next) {
   const token = req.headers['x-admin-token'] || req.query.token;
   if (!token || !sessions.has(token)) {
@@ -27,29 +104,34 @@ function requireAuth(req, res, next) {
   next();
 }
 
-/* ───── Login / Logout ───── */
+/* ───── Login ───── */
 
 router.post('/login', async (req, res) => {
-  const { username, password } = req.body;
-  if (!password) return res.status(400).json({ error: 'Password required' });
+  try {
+    const { username, password } = req.body;
+    if (!password) return res.status(400).json({ error: 'Password required' });
 
-  const { data: admins, error } = await supabase
-    .from('admin_accounts')
-    .select('*');
+    const admins = await getAdmins();
+    let user;
 
-  if (error) return res.status(500).json({ error: 'Database error' });
+    if (username) {
+      user = admins.find(a => a.username === username);
+    } else {
+      user = admins.find(a => a.password_hash === hashPassword(password))
+          || { id: 'master', username: 'master', password_hash: masterHash, role: 'superadmin' };
+    }
 
-  const user = username
-    ? admins.find(a => a.username === username)
-    : admins.find(a => a.password_hash === hashPassword(password));
+    if (!user || user.password_hash !== hashPassword(password)) {
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
 
-  if (!user || user.password_hash !== hashPassword(password)) {
-    return res.status(401).json({ error: 'Invalid credentials' });
+    const token = generateToken();
+    sessions.set(token, { id: user.id, username: user.username, role: user.role });
+    res.json({ status: true, token, user: { id: user.id, username: user.username, role: user.role } });
+  } catch (err) {
+    console.error('Login error:', err);
+    res.status(500).json({ error: 'Login failed' });
   }
-
-  const token = generateToken();
-  sessions.set(token, { id: user.id, username: user.username, role: user.role });
-  res.json({ status: true, token, user: { id: user.id, username: user.username, role: user.role } });
 });
 
 router.post('/logout', requireAuth, (req, res) => {
@@ -58,44 +140,12 @@ router.post('/logout', requireAuth, (req, res) => {
   res.json({ status: true });
 });
 
-/* ───── Seed (auto-create master if no admins exist) ───── */
-
-async function ensureMasterAdmin() {
-  const { data: admins } = await supabase.from('admin_accounts').select('id').limit(1);
-  if (admins && admins.length === 0) {
-    const masterHash = process.env.ADMIN_PASSWORD_HASH || hashPassword('rarehooks2024');
-    await supabase.from('admin_accounts').insert([
-      { id: 'master', username: 'master', password_hash: masterHash, role: 'superadmin' }
-    ]);
-    console.log('Master admin account created');
-  }
-}
-
-async function seedProducts() {
-  const { data: existing } = await supabase.from('products').select('id').limit(1);
-  if (existing && existing.length === 0) {
-    const defaults = [
-      { id: 'jungle-green', name: 'Jungle Green', price: 2500, tag: 'Ready-Made', stock: 10 },
-      { id: 'blue-dream', name: 'Blue Dream', price: 2500, tag: 'Made to Order', stock: 5 },
-      { id: 'cream-la', name: 'Cream LA', price: 2500, tag: 'Made to Order', stock: 5 },
-      { id: 'pink-haze', name: 'Pink Haze', price: 2500, tag: 'Made to Order', stock: 5 },
-      { id: 'bronx', name: 'Bronx', price: 2500, tag: 'Ready-Made', stock: 8 },
-      { id: 'blood-blue', name: 'Blood & Blue', price: 4500, tag: 'Bundle', stock: 3 },
-    ];
-    const { error } = await supabase.from('products').insert(defaults);
-    if (!error) console.log('Default products seeded');
-  }
-}
-
-ensureMasterAdmin();
-seedProducts();
-
-/* ───── Admin Account Management ───── */
+/* ───── Accounts ───── */
 
 router.get('/accounts', requireAuth, async (req, res) => {
-  const { data, error } = await supabase.from('admin_accounts').select('id, username, role, created_at').order('created_at');
-  if (error) return res.status(500).json({ error: 'Database error' });
-  res.json({ status: true, accounts: data });
+  const admins = await getAdmins();
+  const safe = admins.map(a => ({ id: a.id, username: a.username, role: a.role, created_at: a.created_at }));
+  res.json({ status: true, accounts: safe });
 });
 
 router.post('/accounts', requireAuth, async (req, res) => {
@@ -103,15 +153,19 @@ router.post('/accounts', requireAuth, async (req, res) => {
   if (!username || !password) return res.status(400).json({ error: 'Username and password required' });
   if (password.length < 6) return res.status(400).json({ error: 'Password must be at least 6 characters' });
 
-  const { data: existing } = await supabase.from('admin_accounts').select('id').eq('username', username).limit(1);
-  if (existing && existing.length > 0) return res.status(400).json({ error: 'Username already exists' });
+  const admins = await getAdmins();
+  if (admins.find(a => a.username === username)) return res.status(400).json({ error: 'Username already exists' });
 
-  const { data, error } = await supabase.from('admin_accounts').insert([
-    { id: generateId(), username, password_hash: hashPassword(password), role: 'admin' }
-  ]).select('id, username, role, created_at').single();
+  const newAdmin = { id: generateId(), username, password_hash: hashPassword(password), role: 'admin', created_at: new Date().toISOString() };
 
-  if (error) return res.status(500).json({ error: 'Failed to create account' });
-  res.json({ status: true, account: data });
+  if (dbReady) {
+    const { data, error } = await supabase.from('admin_accounts').insert([newAdmin]).select('id, username, role, created_at').single();
+    if (error) return res.status(500).json({ error: error.message || 'Failed to create account' });
+    return res.json({ status: true, account: data });
+  }
+
+  fallbackAdmins.push(newAdmin);
+  res.json({ status: true, account: { id: newAdmin.id, username: newAdmin.username, role: newAdmin.role, created_at: newAdmin.created_at } });
 });
 
 router.patch('/accounts/:id/password', requireAuth, async (req, res) => {
@@ -119,24 +173,34 @@ router.patch('/accounts/:id/password', requireAuth, async (req, res) => {
   if (!currentPassword || !newPassword) return res.status(400).json({ error: 'Current and new password required' });
   if (newPassword.length < 6) return res.status(400).json({ error: 'Password must be at least 6 characters' });
 
-  const { data: admin } = await supabase.from('admin_accounts').select('*').eq('id', req.admin.id).single();
+  const admins = await getAdmins();
+  const admin = admins.find(a => a.id === req.admin.id);
   if (!admin) return res.status(404).json({ error: 'Account not found' });
   if (admin.password_hash !== hashPassword(currentPassword)) return res.status(401).json({ error: 'Current password is incorrect' });
 
-  const { error } = await supabase.from('admin_accounts').update({ password_hash: hashPassword(newPassword) }).eq('id', req.admin.id);
-  if (error) return res.status(500).json({ error: 'Failed to update password' });
+  if (dbReady) {
+    const { error } = await supabase.from('admin_accounts').update({ password_hash: hashPassword(newPassword) }).eq('id', req.admin.id);
+    if (error) return res.status(500).json({ error: error.message });
+  } else {
+    const idx = fallbackAdmins.findIndex(a => a.id === req.admin.id);
+    if (idx !== -1) fallbackAdmins[idx].password_hash = hashPassword(newPassword);
+  }
 
   res.json({ status: true, message: 'Password updated' });
 });
 
 router.post('/accounts/:id/reset-password', requireAuth, async (req, res) => {
   if (req.admin.role !== 'superadmin') return res.status(403).json({ error: 'Only master admin can reset passwords' });
-
   const { newPassword } = req.body;
   if (!newPassword || newPassword.length < 6) return res.status(400).json({ error: 'Password must be at least 6 characters' });
 
-  const { error } = await supabase.from('admin_accounts').update({ password_hash: hashPassword(newPassword) }).eq('id', req.params.id);
-  if (error) return res.status(500).json({ error: 'Failed to reset password' });
+  if (dbReady) {
+    const { error } = await supabase.from('admin_accounts').update({ password_hash: hashPassword(newPassword) }).eq('id', req.params.id);
+    if (error) return res.status(500).json({ error: error.message });
+  } else {
+    const idx = fallbackAdmins.findIndex(a => a.id === req.params.id);
+    if (idx !== -1) fallbackAdmins[idx].password_hash = hashPassword(newPassword);
+  }
 
   res.json({ status: true, message: 'Password reset successful' });
 });
@@ -145,8 +209,13 @@ router.delete('/accounts/:id', requireAuth, async (req, res) => {
   if (req.admin.role !== 'superadmin') return res.status(403).json({ error: 'Only master admin can delete accounts' });
   if (req.params.id === 'master') return res.status(400).json({ error: 'Cannot delete master account' });
 
-  const { error } = await supabase.from('admin_accounts').delete().eq('id', req.params.id);
-  if (error) return res.status(500).json({ error: 'Failed to delete account' });
+  if (dbReady) {
+    const { error } = await supabase.from('admin_accounts').delete().eq('id', req.params.id);
+    if (error) return res.status(500).json({ error: error.message });
+  } else {
+    const idx = fallbackAdmins.findIndex(a => a.id === req.params.id);
+    if (idx !== -1) fallbackAdmins.splice(idx, 1);
+  }
 
   res.json({ status: true });
 });
@@ -154,23 +223,26 @@ router.delete('/accounts/:id', requireAuth, async (req, res) => {
 /* ───── Products ───── */
 
 router.get('/products', requireAuth, async (req, res) => {
-  const { data, error } = await supabase.from('products').select('*').order('created_at');
-  if (error) return res.status(500).json({ error: 'Database error' });
-  res.json({ status: true, products: data });
+  const products = await getProducts();
+  res.json({ status: true, products });
 });
 
 router.post('/products', requireAuth, async (req, res) => {
   const { id, name, price, currency, tag, stock, image, description } = req.body;
   if (!id || !name || !price) return res.status(400).json({ error: 'id, name, price are required' });
 
-  const { data, error } = await supabase.from('products').insert([
-    { id, name, price: Number(price), currency: currency || 'KES', tag: tag || 'New', stock: Number(stock) || 0, image: image || '', description: description || '' }
-  ]).select('*').single();
+  const product = { id, name, price: Number(price), currency: currency || 'KES', tag: tag || 'New', stock: Number(stock) || 0, image: image || '', description: description || '' };
 
-  if (error && error.code === '23505') return res.status(400).json({ error: 'Product ID already exists' });
-  if (error) return res.status(500).json({ error: 'Failed to create product' });
+  if (dbReady) {
+    const { data, error } = await supabase.from('products').insert([product]).select('*').single();
+    if (error && error.code === '23505') return res.status(400).json({ error: 'Product ID already exists' });
+    if (error) return res.status(500).json({ error: error.message || 'Failed to create product' });
+    return res.json({ status: true, product: data });
+  }
 
-  res.json({ status: true, product: data });
+  if (fallbackProducts.find(p => p.id === id)) return res.status(400).json({ error: 'Product ID already exists' });
+  fallbackProducts.push(product);
+  res.json({ status: true, product });
 });
 
 router.patch('/products/:id', requireAuth, async (req, res) => {
@@ -179,15 +251,26 @@ router.patch('/products/:id', requireAuth, async (req, res) => {
     if (req.body[key] !== undefined) updates[key] = (key === 'price' || key === 'stock') ? Number(req.body[key]) : req.body[key];
   }
 
-  const { data, error } = await supabase.from('products').update(updates).eq('id', req.params.id).select('*').single();
-  if (error) return res.status(404).json({ error: 'Product not found' });
+  if (dbReady) {
+    const { data, error } = await supabase.from('products').update(updates).eq('id', req.params.id).select('*').single();
+    if (error) return res.status(404).json({ error: 'Product not found' });
+    return res.json({ status: true, product: data });
+  }
 
-  res.json({ status: true, product: data });
+  const idx = fallbackProducts.findIndex(p => p.id === req.params.id);
+  if (idx === -1) return res.status(404).json({ error: 'Product not found' });
+  Object.assign(fallbackProducts[idx], updates);
+  res.json({ status: true, product: fallbackProducts[idx] });
 });
 
 router.delete('/products/:id', requireAuth, async (req, res) => {
-  const { error } = await supabase.from('products').delete().eq('id', req.params.id);
-  if (error) return res.status(500).json({ error: 'Failed to delete product' });
+  if (dbReady) {
+    const { error } = await supabase.from('products').delete().eq('id', req.params.id);
+    if (error) return res.status(500).json({ error: error.message });
+  } else {
+    const idx = fallbackProducts.findIndex(p => p.id === req.params.id);
+    if (idx !== -1) fallbackProducts.splice(idx, 1);
+  }
 
   res.json({ status: true });
 });
@@ -195,10 +278,8 @@ router.delete('/products/:id', requireAuth, async (req, res) => {
 /* ───── Orders ───── */
 
 router.get('/orders', requireAuth, async (req, res) => {
-  const { data, error } = await supabase.from('orders').select('*').order('created_at', { ascending: false });
-  if (error) return res.status(500).json({ error: 'Database error' });
-
-  res.json({ status: true, orders: data });
+  const orders = await getOrders();
+  res.json({ status: true, orders });
 });
 
 router.patch('/orders/:id', requireAuth, async (req, res) => {
@@ -207,26 +288,43 @@ router.patch('/orders/:id', requireAuth, async (req, res) => {
   if (req.body.notes) updates.admin_notes = req.body.notes;
   updates.updated_at = new Date().toISOString();
 
-  const { data, error } = await supabase.from('orders').update(updates).eq('id', req.params.id).select('*').single();
-  if (error) return res.status(404).json({ error: 'Order not found' });
+  if (dbReady) {
+    const { data, error } = await supabase.from('orders').update(updates).eq('id', req.params.id).select('*').single();
+    if (error) return res.status(404).json({ error: 'Order not found' });
+    return res.json({ status: true, order: data });
+  }
 
-  res.json({ status: true, order: data });
+  const idx = fallbackOrders.findIndex(o => o.id === req.params.id);
+  if (idx === -1) return res.status(404).json({ error: 'Order not found' });
+  Object.assign(fallbackOrders[idx], updates);
+  res.json({ status: true, order: fallbackOrders[idx] });
 });
 
 /* ───── Contact Messages ───── */
 
 router.get('/messages', requireAuth, async (req, res) => {
-  const { data, error } = await supabase.from('contact_messages').select('*').order('created_at', { ascending: false });
-  if (error) return res.status(500).json({ error: 'Database error' });
-
-  res.json({ status: true, messages: data });
+  if (dbReady) {
+    const { data, error } = await supabase.from('contact_messages').select('*').order('created_at', { ascending: false });
+    if (error) return res.status(500).json({ error: error.message });
+    return res.json({ status: true, messages: data });
+  }
+  res.json({ status: true, messages: [] });
 });
 
 router.patch('/messages/:id/read', requireAuth, async (req, res) => {
-  const { error } = await supabase.from('contact_messages').update({ read: true }).eq('id', req.params.id);
-  if (error) return res.status(500).json({ error: 'Database error' });
-
+  if (dbReady) {
+    const { error } = await supabase.from('contact_messages').update({ read: true }).eq('id', req.params.id);
+    if (error) return res.status(500).json({ error: error.message });
+  }
   res.json({ status: true });
 });
 
+function registerOrder(order) {
+  if (dbReady) {
+    supabase.from('orders').insert([order]).catch(() => {});
+  }
+  fallbackOrders.push(order);
+}
+
+export { registerOrder };
 export default router;

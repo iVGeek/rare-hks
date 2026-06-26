@@ -325,10 +325,14 @@ function login() {
         loadOrders();
         loadAccounts();
       } else {
+        document.getElementById('loginError').textContent = d.error || 'Invalid credentials';
         document.getElementById('loginError').style.display = 'block';
       }
     })
-    .catch(function () { document.getElementById('loginError').style.display = 'block'; });
+    .catch(function () {
+      document.getElementById('loginError').textContent = 'Connection error — server may be offline';
+      document.getElementById('loginError').style.display = 'block';
+    });
 }
 
 function logout() {
@@ -419,7 +423,10 @@ function saveProduct() {
   if (!id || !name || !price) { alert('ID, Name, and Price are required.'); return; }
   var body = { id: id, name: name, price: price, stock: parseInt(document.getElementById('pfStock').value) || 0, tag: document.getElementById('pfTag').value, image: document.getElementById('pfImage').value.trim(), description: document.getElementById('pfDescription').value.trim(), currency: 'KES' };
   var promise = currentEditId ? api('/products/' + currentEditId, { method: 'PATCH', body: body }) : api('/products', { method: 'POST', body: body });
-  promise.then(function (d) { if (!d.status) { alert(d.error || 'Failed'); return; } closeModal('productModal'); loadProducts(); });
+  promise.then(function (d) {
+    if (d.status) { closeModal('productModal'); loadProducts(); }
+    else { alert('Error: ' + (d.error || 'Failed')); }
+  });
 }
 
 function deleteProduct(id) {
