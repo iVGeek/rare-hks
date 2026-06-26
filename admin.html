@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin — RAREHOOKS</title>
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #0A0A0A;
+      color: #F7F7F7;
+      min-height: 100vh;
+    }
+    .container { max-width: 1200px; margin: 0 auto; padding: 24px; }
+
+    /* Login */
+    .login-screen {
+      display: flex; align-items: center; justify-content: center;
+      min-height: 100vh; padding: 24px;
+    }
+    .login-box {
+      background: #1A1A1A; padding: 40px; border-radius: 12px;
+      border: 1px solid rgba(255,215,0,0.12); width: 100%; max-width: 380px;
+    }
+    .login-box h1 { font-size: 1.5rem; margin-bottom: 4px; color: #FFD700; }
+    .login-box p { font-size: 0.8rem; color: #666; margin-bottom: 24px; }
+    .login-box input {
+      width: 100%; padding: 12px 16px; border: 1px solid #333;
+      background: #0A0A0A; color: #F7F7F7; border-radius: 6px;
+      font-size: 0.95rem; margin-bottom: 12px;
+    }
+    .login-box input:focus { outline: none; border-color: #FFD700; }
+    .login-box .error { color: #ff4444; font-size: 0.8rem; margin-bottom: 12px; display: none; }
+    .login-box button {
+      width: 100%; padding: 12px; background: #FFD700; color: #0A0A0A;
+      border: none; border-radius: 6px; font-weight: 700; font-size: 0.95rem;
+      cursor: pointer; text-transform: uppercase; letter-spacing: 0.05em;
+    }
+    .login-box button:hover { background: #e6c200; }
+
+    /* Dashboard */
+    .dashboard { display: none; }
+    .header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 32px; padding-bottom: 16px;
+      border-bottom: 1px solid #222;
+    }
+    .header h1 { font-size: 1.3rem; color: #FFD700; text-transform: uppercase; letter-spacing: 0.1em; }
+    .header-info { color: #666; font-size: 0.8rem; }
+    .header-info strong { color: #999; }
+    .header button {
+      padding: 8px 16px; background: transparent; color: #888; border: 1px solid #333;
+      border-radius: 6px; cursor: pointer; font-size: 0.8rem;
+    }
+    .header button:hover { border-color: #ff4444; color: #ff4444; }
+
+    .tabs {
+      display: flex; gap: 4px; margin-bottom: 24px;
+      background: #1A1A1A; border-radius: 8px; padding: 4px; width: fit-content;
+      flex-wrap: wrap;
+    }
+    .tabs button {
+      padding: 8px 20px; background: transparent; color: #888; border: none;
+      border-radius: 6px; cursor: pointer; font-size: 0.85rem; font-weight: 500;
+      white-space: nowrap;
+    }
+    .tabs button.active { background: #FFD700; color: #0A0A0A; font-weight: 600; }
+
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    /* Tables */
+    table { width: 100%; border-collapse: collapse; }
+    th, td { text-align: left; padding: 12px; border-bottom: 1px solid #222; font-size: 0.85rem; }
+    th { color: #888; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.75rem; }
+    td { color: #ccc; }
+    .badge {
+      display: inline-block; padding: 2px 8px; border-radius: 4px;
+      font-size: 0.7rem; font-weight: 600; text-transform: uppercase;
+    }
+    .badge.paid { background: rgba(0,200,83,0.15); color: #00c853; }
+    .badge.pending { background: rgba(255,215,0,0.15); color: #FFD700; }
+    .badge.shipped { background: rgba(33,150,243,0.15); color: #2196f3; }
+    .badge.ready { background: rgba(255,215,0,0.15); color: #FFD700; }
+    .badge.made { background: rgba(156,39,176,0.15); color: #9c27b0; }
+    .badge.bundle { background: rgba(255,87,34,0.15); color: #ff5722; }
+    .badge.stock-low { background: rgba(255,68,68,0.15); color: #ff4444; }
+    .badge.stock-ok { background: rgba(0,200,83,0.15); color: #00c853; }
+    .badge.superadmin { background: rgba(255,215,0,0.2); color: #FFD700; }
+    .badge.admin { background: rgba(33,150,243,0.15); color: #2196f3; }
+
+    .actions { display: flex; gap: 4px; flex-wrap: wrap; }
+    .actions button {
+      padding: 4px 10px; border-radius: 4px; border: none; cursor: pointer;
+      font-size: 0.75rem; font-weight: 500;
+    }
+    .actions .edit { background: rgba(255,215,0,0.15); color: #FFD700; }
+    .actions .delete { background: rgba(255,68,68,0.15); color: #ff4444; }
+    .actions .reset-pw { background: rgba(33,150,243,0.15); color: #2196f3; }
+
+    /* Modal */
+    .modal {
+      display: none; position: fixed; inset: 0; z-index: 100;
+      background: rgba(0,0,0,0.7); align-items: center; justify-content: center;
+      padding: 24px;
+    }
+    .modal.open { display: flex; }
+    .modal-box {
+      background: #1A1A1A; padding: 32px; border-radius: 12px;
+      width: 100%; max-width: 480px; max-height: 90vh; overflow-y: auto;
+    }
+    .modal-box h2 { font-size: 1.2rem; margin-bottom: 20px; color: #FFD700; }
+    .modal-box .form-group { margin-bottom: 14px; }
+    .modal-box label { display: block; font-size: 0.8rem; color: #888; margin-bottom: 4px; }
+    .modal-box input, .modal-box select, .modal-box textarea {
+      width: 100%; padding: 10px 14px; border: 1px solid #333;
+      background: #0A0A0A; color: #F7F7F7; border-radius: 6px; font-size: 0.9rem; font-family: inherit;
+    }
+    .modal-box input:focus, .modal-box select:focus, .modal-box textarea:focus {
+      outline: none; border-color: #FFD700;
+    }
+    .modal-box textarea { resize: vertical; min-height: 60px; }
+    .modal-actions { display: flex; gap: 8px; margin-top: 20px; }
+    .modal-actions button {
+      flex: 1; padding: 10px; border-radius: 6px; border: none;
+      cursor: pointer; font-weight: 600; font-size: 0.85rem;
+    }
+    .modal-actions .save { background: #FFD700; color: #0A0A0A; }
+    .modal-actions .cancel { background: #333; color: #888; }
+
+    .empty { text-align: center; padding: 60px 24px; color: #555; font-size: 0.9rem; }
+    .table-wrap { overflow-x: auto; }
+
+    .order-detail {
+      background: #111; border-radius: 8px; padding: 16px;
+      margin-top: 8px; font-size: 0.8rem; color: #888; line-height: 1.8;
+      display: none;
+    }
+    .order-detail.open { display: block; }
+    .order-detail strong { color: #ccc; }
+    .order-row { cursor: pointer; }
+    .order-row:hover td { background: rgba(255,255,255,0.02); }
+
+    .success-msg {
+      background: rgba(0,200,83,0.1); color: #00c853; padding: 8px 12px;
+      border-radius: 6px; font-size: 0.8rem; margin-bottom: 12px; display: none;
+    }
+    .success-msg.show { display: block; }
+  </style>
+</head>
+<body>
+
+<div class="login-screen" id="loginScreen">
+  <div class="login-box">
+    <h1>RAREHOOKS</h1>
+    <p>Admin Panel</p>
+    <input type="text" id="loginUsername" placeholder="Username (leave blank for master)" autocomplete="off">
+    <input type="password" id="loginPassword" placeholder="Password" autocomplete="off">
+    <div class="error" id="loginError">Invalid credentials</div>
+    <button onclick="login()">Login</button>
+  </div>
+</div>
+
+<div class="dashboard" id="dashboard">
+  <div class="container">
+    <div class="header">
+      <div>
+        <h1>RAREHOOKS Admin</h1>
+        <div class="header-info">Logged in as <strong id="currentUser">—</strong> · <span id="currentRole">—</span></div>
+      </div>
+      <button onclick="logout()">Logout</button>
+    </div>
+
+    <div class="tabs">
+      <button class="active" onclick="switchTab(this, 'productsTab')">Products</button>
+      <button onclick="switchTab(this, 'ordersTab')">Orders</button>
+      <button onclick="switchTab(this, 'messagesTab')">Messages</button>
+      <button onclick="switchTab(this, 'accountsTab')">Accounts</button>
+    </div>
+
+    <!-- Products Tab -->
+    <div class="tab-content active" id="productsTab">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+        <span style="font-size:0.85rem;color:#666;" id="productsCount"></span>
+        <button onclick="openAddProduct()" style="padding:8px 16px;background:#FFD700;color:#0A0A0A;border:none;border-radius:6px;font-weight:600;cursor:pointer;font-size:0.85rem;">+ Add Product</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>ID</th><th>Name</th><th>Price</th><th>Tag</th><th>Stock</th><th>Actions</th></tr>
+          </thead>
+          <tbody id="productsTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Orders Tab -->
+    <div class="tab-content" id="ordersTab">
+      <div style="margin-bottom:16px;">
+        <span style="font-size:0.85rem;color:#666;" id="ordersCount"></span>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Order ID</th><th>Customer</th><th>Product</th><th>Amount</th><th>Status</th><th>Date</th></tr>
+          </thead>
+          <tbody id="ordersTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Messages Tab -->
+    <div class="tab-content" id="messagesTab">
+      <div style="margin-bottom:16px;">
+        <span style="font-size:0.85rem;color:#666;" id="messagesCount"></span>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Name</th><th>Email</th><th>Message</th><th>Date</th><th>Status</th></tr>
+          </thead>
+          <tbody id="messagesTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Accounts Tab -->
+    <div class="tab-content" id="accountsTab">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+        <span style="font-size:0.85rem;color:#666;" id="accountsCount"></span>
+        <button onclick="openCreateAccount()" style="padding:8px 16px;background:#FFD700;color:#0A0A0A;border:none;border-radius:6px;font-weight:600;cursor:pointer;font-size:0.85rem;">+ Create Account</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Username</th><th>Role</th><th>Created</th><th>Actions</th></tr>
+          </thead>
+          <tbody id="accountsTableBody"></tbody>
+        </table>
+      </div>
+      <div style="margin-top:32px;padding-top:24px;border-top:1px solid #222;">
+        <h3 style="font-size:0.9rem;color:#FFD700;margin-bottom:12px;">Change Your Password</h3>
+        <div class="success-msg" id="pwChangeSuccess">Password updated successfully</div>
+        <div style="max-width:360px;">
+          <div class="form-group">
+            <label>Current Password</label>
+            <input type="password" id="changeCurrentPw" placeholder="Current password">
+          </div>
+          <div class="form-group">
+            <label>New Password</label>
+            <input type="password" id="changeNewPw" placeholder="Min 6 characters">
+          </div>
+          <button onclick="changePassword()" style="padding:10px 20px;background:#FFD700;color:#0A0A0A;border:none;border-radius:6px;font-weight:600;cursor:pointer;font-size:0.85rem;">Update Password</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Product Modal -->
+<div class="modal" id="productModal">
+  <div class="modal-box">
+    <h2 id="productModalTitle">Add Product</h2>
+    <div class="form-group"><label>Product ID *</label><input type="text" id="pfId" placeholder="e.g., navy-snapback"></div>
+    <div class="form-group"><label>Name *</label><input type="text" id="pfName" placeholder="Navy Snapback"></div>
+    <div class="form-group"><label>Price (KES) *</label><input type="number" id="pfPrice" placeholder="2500"></div>
+    <div class="form-group"><label>Stock</label><input type="number" id="pfStock" placeholder="10"></div>
+    <div class="form-group"><label>Tag</label><select id="pfTag"><option value="Ready-Made">Ready-Made</option><option value="Made to Order">Made to Order</option><option value="Bundle">Bundle</option></select></div>
+    <div class="form-group"><label>Image URL</label><input type="url" id="pfImage" placeholder="https://..."></div>
+    <div class="form-group"><label>Description</label><textarea id="pfDescription" placeholder="Product description..." rows="3"></textarea></div>
+    <div class="modal-actions"><button class="save" id="productModalSave">Save</button><button class="cancel" onclick="closeModal('productModal')">Cancel</button></div>
+  </div>
+</div>
+
+<!-- Account Modal -->
+<div class="modal" id="accountModal">
+  <div class="modal-box">
+    <h2>Create Admin Account</h2>
+    <div class="form-group"><label>Username *</label><input type="text" id="acUsername" placeholder="admin"></div>
+    <div class="form-group"><label>Password *</label><input type="password" id="acPassword" placeholder="Min 6 characters"></div>
+    <div class="modal-actions"><button class="save" onclick="createAccount()">Create</button><button class="cancel" onclick="closeModal('accountModal')">Cancel</button></div>
+  </div>
+</div>
+
+<!-- Reset Password Modal -->
+<div class="modal" id="resetPwModal">
+  <div class="modal-box">
+    <h2>Reset Password</h2>
+    <p style="font-size:0.85rem;color:#888;margin-bottom:16px;">Resetting password for <strong id="resetTargetName" style="color:#FFD700;"></strong></p>
+    <div class="form-group"><label>New Password *</label><input type="password" id="resetNewPw" placeholder="Min 6 characters"></div>
+    <div class="modal-actions"><button class="save" onclick="resetPassword()">Reset</button><button class="cancel" onclick="closeModal('resetPwModal')">Cancel</button></div>
+  </div>
+</div>
+
+<script>
+var TOKEN = null;
+var currentEditId = null;
+var resetTargetId = null;
+var currentUser = null;
+
+function login() {
+  var username = document.getElementById('loginUsername').value.trim() || null;
+  var password = document.getElementById('loginPassword').value;
+
+  fetch('/api/admin/login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username: username, password: password }),
+  })
+    .then(function (r) { return r.json(); })
+    .then(function (d) {
+      if (d.status && d.token) {
+        TOKEN = d.token;
+        currentUser = d.user;
+        document.getElementById('currentUser').textContent = d.user.username;
+        document.getElementById('currentRole').textContent = d.user.role;
+        document.getElementById('loginScreen').style.display = 'none';
+        document.getElementById('dashboard').style.display = 'block';
+        loadProducts();
+        loadOrders();
+        loadAccounts();
+      } else {
+        document.getElementById('loginError').style.display = 'block';
+      }
+    })
+    .catch(function () { document.getElementById('loginError').style.display = 'block'; });
+}
+
+function logout() {
+  fetch('/api/admin/logout', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-admin-token': TOKEN },
+  }).then(function () {
+    TOKEN = null; currentUser = null;
+    document.getElementById('loginScreen').style.display = 'flex';
+    document.getElementById('dashboard').style.display = 'none';
+    document.getElementById('loginPassword').value = '';
+    document.getElementById('loginError').style.display = 'none';
+  });
+}
+
+function api(path, opts) {
+  opts = opts || {};
+  opts.headers = opts.headers || {};
+  opts.headers['x-admin-token'] = TOKEN;
+  opts.headers['Content-Type'] = 'application/json';
+  if (opts.body && typeof opts.body === 'object') opts.body = JSON.stringify(opts.body);
+  return fetch('/api/admin' + path, opts).then(function (r) { return r.json(); });
+}
+
+function switchTab(btn, tabId) {
+  document.querySelectorAll('.tabs button').forEach(function (b) { b.classList.remove('active'); });
+  document.querySelectorAll('.tab-content').forEach(function (t) { t.classList.remove('active'); });
+  btn.classList.add('active');
+  document.getElementById(tabId).classList.add('active');
+  if (tabId === 'productsTab') loadProducts();
+  if (tabId === 'ordersTab') loadOrders();
+  if (tabId === 'accountsTab') loadAccounts();
+  if (tabId === 'messagesTab') loadMessages();
+}
+
+/* ───── Products ───── */
+
+function loadProducts() {
+  api('/products').then(function (d) {
+    if (!d.status) return;
+    var html = '';
+    d.products.forEach(function (p) {
+      html += '<tr>' +
+        '<td style="font-family:monospace;font-size:0.75rem;color:#666;">' + esc(p.id) + '</td>' +
+        '<td>' + esc(p.name) + '</td>' +
+        '<td style="color:#FFD700;">KES ' + p.price.toLocaleString() + '</td>' +
+        '<td><span class="badge ' + p.tag.toLowerCase().replace(/\s+/g, '-') + '">' + esc(p.tag) + '</span></td>' +
+        '<td><span class="badge ' + (p.stock <= 3 ? 'stock-low' : 'stock-ok') + '">' + p.stock + '</span></td>' +
+        '<td class="actions"><button class="edit" onclick="openEditProduct(\'' + esc(p.id) + '\')">Edit</button><button class="delete" onclick="deleteProduct(\'' + esc(p.id) + '\')">Del</button></td></tr>';
+    });
+    document.getElementById('productsTableBody').innerHTML = html;
+    document.getElementById('productsCount').textContent = d.products.length + ' products';
+  });
+}
+
+function openAddProduct() {
+  currentEditId = null;
+  document.getElementById('productModalTitle').textContent = 'Add Product';
+  document.getElementById('pfId').value = ''; document.getElementById('pfId').disabled = false;
+  document.getElementById('pfName').value = ''; document.getElementById('pfPrice').value = '';
+  document.getElementById('pfStock').value = '10'; document.getElementById('pfTag').value = 'Ready-Made';
+  document.getElementById('pfImage').value = ''; document.getElementById('pfDescription').value = '';
+  document.getElementById('productModal').classList.add('open');
+  document.getElementById('productModalSave').onclick = saveProduct;
+}
+
+function openEditProduct(id) {
+  currentEditId = id;
+  document.getElementById('productModalTitle').textContent = 'Edit Product';
+  document.getElementById('pfId').disabled = true;
+  api('/products').then(function (d) {
+    if (!d.status) return;
+    var p = d.products.find(function (x) { return x.id === id; });
+    if (!p) return;
+    document.getElementById('pfId').value = p.id; document.getElementById('pfName').value = p.name;
+    document.getElementById('pfPrice').value = p.price; document.getElementById('pfStock').value = p.stock;
+    document.getElementById('pfTag').value = p.tag; document.getElementById('pfImage').value = p.image || '';
+    document.getElementById('pfDescription').value = p.description || '';
+  });
+  document.getElementById('productModal').classList.add('open');
+  document.getElementById('productModalSave').onclick = saveProduct;
+}
+
+function saveProduct() {
+  var id = document.getElementById('pfId').value.trim();
+  var name = document.getElementById('pfName').value.trim();
+  var price = parseFloat(document.getElementById('pfPrice').value);
+  if (!id || !name || !price) { alert('ID, Name, and Price are required.'); return; }
+  var body = { id: id, name: name, price: price, stock: parseInt(document.getElementById('pfStock').value) || 0, tag: document.getElementById('pfTag').value, image: document.getElementById('pfImage').value.trim(), description: document.getElementById('pfDescription').value.trim(), currency: 'KES' };
+  var promise = currentEditId ? api('/products/' + currentEditId, { method: 'PATCH', body: body }) : api('/products', { method: 'POST', body: body });
+  promise.then(function (d) { if (!d.status) { alert(d.error || 'Failed'); return; } closeModal('productModal'); loadProducts(); });
+}
+
+function deleteProduct(id) {
+  if (!confirm('Delete "' + id + '"?')) return;
+  api('/products/' + id, { method: 'DELETE' }).then(function (d) { if (d.status) loadProducts(); else alert(d.error || 'Failed'); });
+}
+
+/* ───── Orders ───── */
+
+function loadOrders() {
+  api('/orders').then(function (d) {
+    if (!d.status) return;
+    var html = '';
+    if (d.orders.length === 0) {
+      html = '<tr><td colspan="6" class="empty">No orders yet</td></tr>';
+    } else {
+      d.orders.forEach(function (o) {
+        html += '<tr class="order-row" onclick="toggleOrderDetail(\'' + esc(o.id) + '\')">' +
+          '<td style="font-family:monospace;font-size:0.75rem;color:#666;">' + esc(o.id) + '</td>' +
+          '<td>' + esc(o.shipping?.name || '—') + '<br><span style="font-size:0.7rem;color:#555;">' + esc(o.shipping?.email || '') + '</span></td>' +
+          '<td>' + esc(o.productName || '—') + '</td>' +
+          '<td style="color:#FFD700;">KES ' + (o.amount || 0).toLocaleString() + '</td>' +
+          '<td><span class="badge ' + (o.status || 'pending') + '">' + esc(o.status || 'pending') + '</span></td>' +
+          '<td style="font-size:0.75rem;color:#666;">' + new Date(o.createdAt).toLocaleDateString() + '</td></tr>';
+        html += '<tr id="detail-' + esc(o.id) + '" style="display:none;"><td colspan="6"><div class="order-detail open">' +
+          '<strong>Phone:</strong> ' + esc(o.shipping?.phone || '—') + '<br>' +
+          '<strong>Address:</strong> ' + esc(o.shipping?.address || '—') + '<br>' +
+          '<strong>City:</strong> ' + esc(o.shipping?.city || '—') + '<br>' +
+          '<strong>Country:</strong> ' + esc(o.shipping?.country || '—') + '<br>' +
+          '<strong>Postal Code:</strong> ' + esc(o.shipping?.postalCode || '—') + '<br>' +
+          '<strong>Notes:</strong> ' + esc(o.shipping?.notes || '—') + '<br>' +
+          '<strong>Payment Ref:</strong> ' + esc(o.paymentReference || '—') + '<br>' +
+          '<strong>Ordered:</strong> ' + new Date(o.createdAt).toLocaleString() + '</div></td></tr>';
+      });
+    }
+    document.getElementById('ordersTableBody').innerHTML = html;
+    document.getElementById('ordersCount').textContent = d.orders.length + ' orders';
+  });
+}
+
+function toggleOrderDetail(id) {
+  var row = document.getElementById('detail-' + id);
+  if (row) row.style.display = row.style.display === 'none' ? 'table-row' : 'none';
+}
+
+/* ───── Messages ───── */
+
+function loadMessages() {
+  api('/messages').then(function (d) {
+    if (!d.status) return;
+    var html = '';
+    d.messages.forEach(function (m) {
+      html += '<tr>' +
+        '<td>' + esc(m.name) + '</td>' +
+        '<td><a href="mailto:' + esc(m.email) + '" style="color:#888;">' + esc(m.email) + '</a></td>' +
+        '<td style="max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + esc(m.message) + '">' + esc(m.message) + '</td>' +
+        '<td style="font-size:0.75rem;color:#666;">' + new Date(m.created_at).toLocaleString() + '</td>' +
+        '<td><span class="badge ' + (m.read ? 'stock-ok' : 'pending') + '">' + (m.read ? 'Read' : 'New') + '</span></td></tr>';
+    });
+    document.getElementById('messagesTableBody').innerHTML = html;
+    document.getElementById('messagesCount').textContent = d.messages.length + ' messages';
+  });
+}
+
+/* ───── Accounts ───── */
+
+function loadAccounts() {
+  api('/accounts').then(function (d) {
+    if (!d.status) return;
+    var html = '';
+    d.accounts.forEach(function (a) {
+      var isSelf = currentUser && a.id === currentUser.id;
+      html += '<tr>' +
+        '<td>' + esc(a.username) + (isSelf ? ' <span style="color:#666;font-size:0.7rem;">(you)</span>' : '') + '</td>' +
+        '<td><span class="badge ' + a.role + '">' + esc(a.role) + '</span></td>' +
+        '<td style="font-size:0.75rem;color:#666;">' + new Date(a.createdAt).toLocaleDateString() + '</td>' +
+        '<td class="actions">' +
+          (currentUser?.role === 'superadmin' && a.id !== 'master' ? '<button class="reset-pw" onclick="openResetPw(\'' + esc(a.id) + '\',\'' + esc(a.username) + '\')">Reset PW</button><button class="delete" onclick="deleteAccount(\'' + esc(a.id) + '\',\'' + esc(a.username) + '\')">Delete</button>' : '') +
+        '</td></tr>';
+    });
+    document.getElementById('accountsTableBody').innerHTML = html;
+    document.getElementById('accountsCount').textContent = d.accounts.length + ' accounts';
+  });
+}
+
+function openCreateAccount() {
+  document.getElementById('acUsername').value = '';
+  document.getElementById('acPassword').value = '';
+  document.getElementById('accountModal').classList.add('open');
+}
+
+function createAccount() {
+  var username = document.getElementById('acUsername').value.trim();
+  var password = document.getElementById('acPassword').value;
+  if (!username || !password) { alert('Username and password required'); return; }
+  api('/accounts', { method: 'POST', body: { username: username, password: password } }).then(function (d) {
+    if (!d.status) { alert(d.error || 'Failed'); return; }
+    closeModal('accountModal');
+    loadAccounts();
+  });
+}
+
+function openResetPw(id, username) {
+  resetTargetId = id;
+  document.getElementById('resetTargetName').textContent = username;
+  document.getElementById('resetNewPw').value = '';
+  document.getElementById('resetPwModal').classList.add('open');
+}
+
+function resetPassword() {
+  var newPw = document.getElementById('resetNewPw').value;
+  if (!newPw || newPw.length < 6) { alert('Password must be at least 6 characters'); return; }
+  api('/accounts/' + resetTargetId + '/reset-password', { method: 'POST', body: { newPassword: newPw } }).then(function (d) {
+    if (!d.status) { alert(d.error || 'Failed'); return; }
+    closeModal('resetPwModal');
+    alert('Password reset successfully');
+  });
+}
+
+function deleteAccount(id, username) {
+  if (!confirm('Delete account "' + username + '"?')) return;
+  api('/accounts/' + id, { method: 'DELETE' }).then(function (d) {
+    if (!d.status) { alert(d.error || 'Failed'); return; }
+    loadAccounts();
+  });
+}
+
+function changePassword() {
+  var current = document.getElementById('changeCurrentPw').value;
+  var newPw = document.getElementById('changeNewPw').value;
+  if (!current || !newPw) { alert('Fill in both fields'); return; }
+  if (newPw.length < 6) { alert('Password must be at least 6 characters'); return; }
+  api('/accounts/' + currentUser.id + '/password', { method: 'PATCH', body: { currentPassword: current, newPassword: newPw } }).then(function (d) {
+    var el = document.getElementById('pwChangeSuccess');
+    if (d.status) {
+      el.textContent = 'Password updated successfully';
+      el.className = 'success-msg show';
+      document.getElementById('changeCurrentPw').value = '';
+      document.getElementById('changeNewPw').value = '';
+      setTimeout(function () { el.className = 'success-msg'; }, 3000);
+    } else {
+      alert(d.error || 'Failed to update password');
+    }
+  });
+}
+
+/* ───── Shared ───── */
+
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+function esc(s) {
+  if (s == null) return '';
+  var d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+document.addEventListener('keydown', function (e) {
+  if (e.key === 'Escape') document.querySelectorAll('.modal.open').forEach(function (m) { m.classList.remove('open'); });
+});
+</script>
+</body>
+</html>

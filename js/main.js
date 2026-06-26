@@ -319,55 +319,133 @@
   }());
 
   /* ===============================
-     Paystack Payment
+     Shipping + Paystack Payment (2-step)
      =============================== */
   (function () {
-    var modal = document.getElementById('paymentModal');
-    var closeBtn = document.getElementById('paymentModalClose');
-    var form = document.getElementById('paymentForm');
-    var emailInput = document.getElementById('payment-email');
-    var productEl = document.getElementById('paymentModalProduct');
-    var priceEl = document.getElementById('paymentModalPrice');
-    var submitBtn = document.getElementById('paymentSubmitBtn');
-    var currentProduct = null;
+    var shippingModal = document.getElementById('shippingModal');
+    var shippingCloseBtn = document.getElementById('shippingModalClose');
+    var shippingForm = document.getElementById('shippingForm');
+    var shippingProductEl = document.getElementById('shippingModalProduct');
+    var shippingPriceEl = document.getElementById('shippingModalPrice');
+    var shippingSubmitBtn = document.getElementById('shippingSubmitBtn');
 
-    if (!modal || !form) return;
+    var paymentModal = document.getElementById('paymentModal');
+    var paymentCloseBtn = document.getElementById('paymentModalClose');
+    var paymentForm = document.getElementById('paymentForm');
+    var paymentEmailInput = document.getElementById('payment-email');
+    var paymentProductEl = document.getElementById('paymentModalProduct');
+    var paymentPriceEl = document.getElementById('paymentModalPrice');
+    var paymentSubmitBtn = document.getElementById('paymentSubmitBtn');
+
+    var paymentSubmitPrice = document.getElementById('paymentSubmitPrice');
+
+    var currentProduct = null;
+    var currentShipping = null;
+
+    var paymentStepShipping = document.getElementById('paymentStepShipping');
+
+    if (!shippingModal || !shippingForm || !paymentModal || !paymentForm) return;
+
+    function openShippingModal(product) {
+      currentProduct = product;
+      currentShipping = null;
+      shippingProductEl.textContent = product.name;
+      shippingPriceEl.textContent = 'KES ' + product.price.toLocaleString() + ' / $' + (product.price / 130).toFixed(0);
+      shippingForm.reset();
+      if (paymentStepShipping) paymentStepShipping.classList.remove('active');
+      shippingModal.classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeShippingModal() {
+      shippingModal.classList.remove('open');
+      document.body.style.overflow = '';
+    }
+
+    function openPaymentModal() {
+      paymentProductEl.textContent = currentProduct.name;
+      paymentPriceEl.textContent = 'KES ' + currentProduct.price.toLocaleString() + ' / $' + (currentProduct.price / 130).toFixed(0);
+      paymentEmailInput.value = currentShipping?.email || '';
+      if (paymentSubmitPrice) paymentSubmitPrice.textContent = currentProduct.price.toLocaleString();
+      if (paymentStepShipping) paymentStepShipping.classList.add('active');
+      shippingModal.classList.remove('open');
+      paymentModal.classList.add('open');
+    }
+
+    function closePaymentModal() {
+      paymentModal.classList.remove('open');
+      document.body.style.overflow = '';
+    }
 
     document.querySelectorAll('.btn-buy').forEach(function (btn) {
       btn.addEventListener('click', function (e) {
         e.stopPropagation();
-        currentProduct = {
+        openShippingModal({
           id: btn.dataset.productId,
           name: btn.dataset.productName,
           price: parseInt(btn.dataset.price, 10),
-        };
-        productEl.textContent = currentProduct.name;
-        priceEl.textContent = 'KES ' + currentProduct.price.toLocaleString() + ' / $' + (currentProduct.price / 130).toFixed(0);
-        emailInput.value = '';
-        modal.classList.add('open');
-        document.body.style.overflow = 'hidden';
+        });
       });
     });
 
-    function closeModal() {
-      modal.classList.remove('open');
-      document.body.style.overflow = '';
-    }
-
-    closeBtn.addEventListener('click', closeModal);
-    modal.addEventListener('click', function (e) {
-      if (e.target === modal || e.target.classList.contains('payment-modal-backdrop')) closeModal();
+    shippingCloseBtn.addEventListener('click', closeShippingModal);
+    shippingModal.addEventListener('click', function (e) {
+      if (e.target === shippingModal || e.target.classList.contains('payment-modal-backdrop')) closeShippingModal();
     });
 
-    form.addEventListener('submit', function (e) {
+    paymentCloseBtn.addEventListener('click', closePaymentModal);
+    paymentModal.addEventListener('click', function (e) {
+      if (e.target === paymentModal || e.target.classList.contains('payment-modal-backdrop')) closePaymentModal();
+    });
+
+    shippingForm.addEventListener('submit', function (e) {
       e.preventDefault();
       if (!currentProduct) return;
 
-      var email = emailInput.value.trim();
+      var shipping = {
+        name: document.getElementById('shipping-name').value.trim(),
+        email: document.getElementById('shipping-email').value.trim(),
+        phone: document.getElementById('shipping-phone').value.trim(),
+        address: document.getElementById('shipping-address').value.trim(),
+        city: document.getElementById('shipping-city').value.trim(),
+        country: document.getElementById('shipping-country').value,
+        postalCode: document.getElementById('shipping-postal').value.trim(),
+        notes: document.getElementById('shipping-notes').value.trim(),
+      };
+
+      if (!shipping.name || !shipping.email || !shipping.phone || !shipping.address || !shipping.city) {
+        alert('Please fill in all required fields.');
+        return;
+      }
+
+      currentShipping = shipping;
+      shippingSubmitBtn.disabled = true;
+      var submitText = shippingSubmitBtn.querySelector('.shipping-submit-text');
+      var submitArrow = shippingSubmitBtn.querySelector('.shipping-submit-arrow');
+      if (submitText) submitText.textContent = 'Processing...';
+      if (submitArrow) submitArrow.style.display = 'none';
+
+      setTimeout(function () {
+        shippingSubmitBtn.disabled = false;
+        if (submitText) submitText.textContent = 'Continue to Payment';
+        if (submitArrow) submitArrow.style.display = 'flex';
+        openPaymentModal();
+      }, 300);
+    });
+
+    paymentForm.addEventListener('submit', function (e) {
+      e.preventDefault();
+      if (!currentProduct || !currentShipping) return;
+
+      var email = paymentEmailInput.value.trim();
       if (!email) return;
 
-      submitBtn.disabled = true;
-      submitBtn.innerHTML = 'Processing...';
+      var payBtnText = paymentSubmitBtn.querySelector('.shipping-submit-text');
+      var payBtnArrow = paymentSubmitBtn.querySelector('.shipping-submit-arrow');
+
+      paymentSubmitBtn.disabled = true;
+      if (payBtnText) payBtnText.textContent = 'Processing...';
+      if (payBtnArrow) payBtnArrow.style.display = 'none';
 
       fetch('/api/initialize-payment', {
         method: 'POST',
@@ -382,17 +460,33 @@
         .then(function (r) { return r.json(); })
         .then(function (data) {
           if (data.status && data.data && data.data.authorization_url) {
-            window.location.href = data.data.authorization_url;
+            var reference = data.data.reference;
+            fetch('/api/create-order', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                shipping: currentShipping,
+                productId: currentProduct.id,
+                productName: currentProduct.name,
+                amount: currentProduct.price,
+                currency: 'KES',
+                paymentReference: reference,
+              }),
+            }).then(function () {
+              window.location.href = data.data.authorization_url;
+            });
           } else {
             alert('Payment could not be initiated. Please try again.');
-            submitBtn.disabled = false;
-            submitBtn.innerHTML = 'Pay Now <span class="btn-arrow">→</span>';
+            paymentSubmitBtn.disabled = false;
+            if (payBtnText) payBtnText.textContent = 'Pay Now';
+            if (payBtnArrow) payBtnArrow.style.display = 'flex';
           }
         })
         .catch(function () {
           alert('Connection error. Please try again.');
-          submitBtn.disabled = false;
-          submitBtn.innerHTML = 'Pay Now <span class="btn-arrow">→</span>';
+          paymentSubmitBtn.disabled = false;
+          if (payBtnText) payBtnText.textContent = 'Pay Now';
+          if (payBtnArrow) payBtnArrow.style.display = 'flex';
         });
     });
   }());
@@ -462,17 +556,13 @@
      =============================== */
   if (typeof Lenis !== 'undefined' && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
     var lenis = new Lenis({
-      duration: 1.2,
-      easing: function (t) { return Math.min(1, 1.001 - Math.pow(2, -10 * t)); },
+      duration: 0.6,
+      easing: function (t) { return 1 - Math.pow(1 - t, 3); },
       orientation: 'vertical',
       smoothWheel: true,
-      wheelMultiplier: 1,
-    });
-
-    lenis.on('scroll', function (e) {
-      if (typeof ScrollTrigger !== 'undefined') {
-        ScrollTrigger.update();
-      }
+      wheelMultiplier: 1.2,
+      touchMultiplier: 0.5,
+      infinite: false,
     });
 
     function raf(time) {

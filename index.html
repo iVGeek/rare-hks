@@ -447,6 +447,7 @@
       <a href="https://instagram.com/rarehooks" target="_blank" rel="noopener noreferrer" class="footer-social-link" aria-label="Instagram">Instagram</a>
       <a href="mailto:rarehooks@gmail.com" class="footer-social-link" aria-label="Email">Email</a>
       <a href="#hero" class="footer-social-link" aria-label="Back to top">Top</a>
+      <a href="/admin.html" class="footer-social-link" aria-label="Admin" style="opacity:0.3;font-size:0.65rem;">Admin</a>
     </div>
   </footer>
 
@@ -457,25 +458,171 @@
     </svg>
   </button>
 
+  <!-- ================ SHIPPING MODAL ================ -->
+  <div class="payment-modal" id="shippingModal" role="dialog" aria-modal="true" aria-label="Shipping Details">
+    <div class="payment-modal-backdrop"></div>
+    <div class="shipping-modal-content">
+      <button class="shipping-modal-close" id="shippingModalClose" aria-label="Close">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 5l10 10M15 5L5 15"/></svg>
+      </button>
+
+      <!-- Step indicator -->
+      <div class="shipping-steps">
+        <span class="shipping-step active">Shipping</span>
+        <span class="shipping-step-line"></span>
+        <span class="shipping-step">Payment</span>
+      </div>
+
+      <h3 class="shipping-heading">Where to Ship</h3>
+      <p class="shipping-subtitle">Drop your details and we'll handle the rest.</p>
+
+      <div class="shipping-product-badge">
+        <span class="shipping-product-label" id="shippingModalProduct"></span>
+        <span class="shipping-product-price" id="shippingModalPrice"></span>
+      </div>
+
+      <form id="shippingForm" novalidate>
+        <div class="shipping-section">
+          <div class="shipping-section-title">Contact</div>
+          <div class="form-row">
+            <div class="shipping-field">
+              <label for="shipping-name" class="shipping-label">Full Name</label>
+              <div class="shipping-input-wrap">
+                <svg class="shipping-input-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M10 10a4 4 0 100-8 4 4 0 000 8z"/><path d="M2 18c0-4 3.6-6 8-6s8 2 8 6"/></svg>
+                <input type="text" id="shipping-name" class="shipping-input" placeholder="Full Name" required autocomplete="name">
+                <span class="shipping-input-focus"></span>
+              </div>
+            </div>
+            <div class="shipping-field">
+              <label for="shipping-email" class="shipping-label">Email</label>
+              <div class="shipping-input-wrap">
+                <svg class="shipping-input-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M2 4h16v12H2V4z"/><path d="M2 4l8 6 8-6"/></svg>
+                <input type="email" id="shipping-email" class="shipping-input" placeholder="Email" required autocomplete="email">
+                <span class="shipping-input-focus"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="shipping-section">
+          <div class="shipping-section-title">Location</div>
+          <div class="form-row">
+            <div class="shipping-field">
+              <label for="shipping-phone" class="shipping-label">Phone</label>
+              <div class="shipping-input-wrap">
+                <svg class="shipping-input-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M16.5 13.5l-3-1.5-2 2a14.5 14.5 0 01-5.5-5.5l2-2-1.5-3A2 2 0 003.5 3C2 4.5 2 8 4.5 12s5.5 6 9 6c1.5 0 3-1.5 3-3a2 2 0 000-1.5z"/></svg>
+                <input type="tel" id="shipping-phone" class="shipping-input" placeholder="+254 7XX XXX XXX" required autocomplete="tel">
+                <span class="shipping-input-focus"></span>
+              </div>
+            </div>
+            <div class="shipping-field">
+              <label for="shipping-country" class="shipping-label">Country</label>
+              <div class="shipping-input-wrap">
+                <svg class="shipping-input-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="10" cy="10" r="8"/><path d="M2 10h16"/><path d="M10 2a15 15 0 010 16 15 15 0 010-16z"/></svg>
+                <select id="shipping-country" class="shipping-input" required autocomplete="country">
+                  <option value="Kenya" selected>Kenya</option>
+                  <option value="Uganda">Uganda</option>
+                  <option value="Tanzania">Tanzania</option>
+                  <option value="Rwanda">Rwanda</option>
+                  <option value="Other">Other</option>
+                </select>
+                <span class="shipping-input-focus"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="shipping-section">
+          <div class="shipping-section-title">Address</div>
+          <div class="shipping-field">
+            <label for="shipping-address" class="shipping-label">Street Address</label>
+            <div class="shipping-input-wrap">
+              <svg class="shipping-input-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M10 2l8 6v10H2V8l8-6z"/><path d="M7 18v-6h6v6"/></svg>
+              <input type="text" id="shipping-address" class="shipping-input" placeholder="House number, Street, Estate" required autocomplete="address-line1">
+              <span class="shipping-input-focus"></span>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="shipping-field">
+              <label for="shipping-city" class="shipping-label">City</label>
+              <div class="shipping-input-wrap">
+                <svg class="shipping-input-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M2 18h16"/><path d="M6 18V6l4-2 4 2v12"/><path d="M10 10v4"/></svg>
+                <input type="text" id="shipping-city" class="shipping-input" placeholder="Nairobi" required autocomplete="address-level2">
+                <span class="shipping-input-focus"></span>
+              </div>
+            </div>
+            <div class="shipping-field">
+              <label for="shipping-postal" class="shipping-label">Postal Code</label>
+              <div class="shipping-input-wrap">
+                <svg class="shipping-input-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="2" y="4" width="16" height="12" rx="2"/><path d="M6 10h8"/><path d="M6 13h5"/></svg>
+                <input type="text" id="shipping-postal" class="shipping-input" placeholder="00100" autocomplete="postal-code">
+                <span class="shipping-input-focus"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="shipping-section">
+          <div class="shipping-section-title">Extra</div>
+          <div class="shipping-field">
+            <label for="shipping-notes" class="shipping-label">Delivery Notes</label>
+            <div class="shipping-input-wrap">
+              <svg class="shipping-input-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M10 2v16"/><path d="M4 10h12"/></svg>
+              <textarea id="shipping-notes" class="shipping-input shipping-textarea" placeholder="Landmarks, gate code, anything we should know..." rows="2"></textarea>
+              <span class="shipping-input-focus"></span>
+            </div>
+          </div>
+        </div>
+
+        <button type="submit" class="shipping-submit" id="shippingSubmitBtn">
+          <span class="shipping-submit-text">Continue to Payment</span>
+          <span class="shipping-submit-arrow">
+            <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M5 10h10"/><path d="M10 5l5 5-5 5"/></svg>
+          </span>
+        </button>
+      </form>
+    </div>
+  </div>
+
   <!-- ================ PAYMENT MODAL ================ -->
   <div class="payment-modal" id="paymentModal" role="dialog" aria-modal="true" aria-label="Payment">
     <div class="payment-modal-backdrop"></div>
-    <div class="payment-modal-content">
-      <button class="payment-modal-close" id="paymentModalClose" aria-label="Close">&times;</button>
-      <h3 class="payment-modal-title">Secure Checkout</h3>
-      <p class="payment-modal-product" id="paymentModalProduct"></p>
-      <p class="payment-modal-price" id="paymentModalPrice"></p>
+    <div class="payment-modal-content" style="max-width:440px;">
+      <button class="shipping-modal-close" id="paymentModalClose" aria-label="Close">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 5l10 10M15 5L5 15"/></svg>
+      </button>
+
+      <div class="shipping-steps">
+        <span class="shipping-step" id="paymentStepShipping">Shipping</span>
+        <span class="shipping-step-line"></span>
+        <span class="shipping-step active">Payment</span>
+      </div>
+
+      <h3 class="shipping-heading" style="font-size:1.6rem;">Complete Payment</h3>
+      <p class="shipping-subtitle">One last step — enter your email to check out securely.</p>
+
+      <div class="shipping-product-badge" style="margin-bottom:24px;">
+        <span class="shipping-product-label" id="paymentModalProduct"></span>
+        <span class="shipping-product-price" id="paymentModalPrice"></span>
+      </div>
+
       <form id="paymentForm">
-        <div class="form-group">
-          <label for="payment-email" class="form-label">Email Address</label>
-          <input type="email" id="payment-email" class="form-input" placeholder="your@email.com" required autocomplete="email">
+        <div class="shipping-field">
+          <label for="payment-email" class="shipping-label">Email Address</label>
+          <div class="shipping-input-wrap">
+            <svg class="shipping-input-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M2 4h16v12H2V4z"/><path d="M2 4l8 6 8-6"/></svg>
+            <input type="email" id="payment-email" class="shipping-input" placeholder="your@email.com" required autocomplete="email">
+            <span class="shipping-input-focus"></span>
+          </div>
         </div>
-        <button type="submit" class="btn btn-primary form-submit" id="paymentSubmitBtn">
-          Pay Now
-          <span class="btn-arrow">→</span>
+        <button type="submit" class="shipping-submit" id="paymentSubmitBtn" style="margin-top:20px;">
+          <span class="shipping-submit-text">Pay Now — KES <span id="paymentSubmitPrice"></span></span>
+          <span class="shipping-submit-arrow">
+            <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M5 10h10"/><path d="M10 5l5 5-5 5"/></svg>
+          </span>
         </button>
       </form>
-      <p class="payment-modal-note">Secured by Paystack. M-Pesa & international cards accepted.</p>
+      <p style="font-size:0.65rem;color:#444;text-align:center;margin-top:12px;">Secured by Paystack · M-Pesa & cards accepted</p>
     </div>
   </div>
 

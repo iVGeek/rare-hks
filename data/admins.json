@@ -1,0 +1,9 @@
+[
+  {
+    "id": "master",
+    "username": "master",
+    "passwordHash": "0ebd11bb1a1e61fdd745323f7e4d66c109918e628041ccf478dd683cfc4f4efe",
+    "role": "superadmin",
+    "createdAt": "2026-06-26T00:34:09.250Z"
+  }
+]
