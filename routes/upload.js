@@ -35,13 +35,15 @@ router.post('/upload', upload.single('image'), async (req, res) => {
           const { data: pub } = supabase.storage.from('store-images').getPublicUrl(sbPath);
           return res.json({ status: true, url: pub.publicUrl });
         }
-        console.error('Supabase upload error:', error?.message);
+        console.error('Supabase upload error:', error?.message, error?.status);
+        return res.status(502).json({ status: false, error: 'Supabase storage upload failed: ' + (error?.message || 'unknown') });
       } catch (sbErr) {
         console.error('Supabase upload exception:', sbErr?.message);
+        return res.status(502).json({ status: false, error: 'Supabase storage exception: ' + (sbErr?.message || 'unknown') });
       }
     }
 
-    res.json({ status: true, url: '', note: 'Upload failed — image not stored' });
+    res.json({ status: true, url: '', note: 'Supabase client not configured' });
   } catch (err) {
     console.error('Upload error:', err);
     res.status(500).json({ error: 'Upload failed' });
