@@ -322,6 +322,7 @@
 <script>
 var TOKEN = null;
 var currentEditId = null;
+var currentEditProduct = null;
 var resetTargetId = null;
 var currentUser = null;
 
@@ -494,12 +495,14 @@ function openAddProduct() {
 
 function openEditProduct(id) {
   currentEditId = id;
+  currentEditProduct = null;
   document.getElementById('productModalTitle').textContent = 'Edit Product';
   document.getElementById('pfId').disabled = true;
   api('/products').then(function (d) {
     if (!d.status) return;
     var p = d.products.find(function (x) { return x.id === id; });
     if (!p) return;
+    currentEditProduct = p;
     document.getElementById('pfId').value = p.id; document.getElementById('pfName').value = p.name;
     document.getElementById('pfPrice').value = p.price; document.getElementById('pfStock').value = p.stock;
     document.getElementById('pfTag').value = p.tag; document.getElementById('pfImage').value = p.image || '';
@@ -514,7 +517,18 @@ function saveProduct() {
   var name = document.getElementById('pfName').value.trim();
   var price = parseFloat(document.getElementById('pfPrice').value);
   if (!id || !name || !price) { alert('ID, Name, and Price are required.'); return; }
-  var body = { id: id, name: name, price: price, stock: parseInt(document.getElementById('pfStock').value) || 0, tag: document.getElementById('pfTag').value, image: document.getElementById('pfImage').value.trim(), description: document.getElementById('pfDescription').value.trim(), currency: 'KES' };
+  var body;
+  if (currentEditId && currentEditProduct) {
+    body = {};
+    var fields = ['name', 'price', 'stock', 'tag', 'image', 'description', 'currency'];
+    var vals = { name: name, price: price, stock: parseInt(document.getElementById('pfStock').value) || 0, tag: document.getElementById('pfTag').value, image: document.getElementById('pfImage').value.trim(), description: document.getElementById('pfDescription').value.trim(), currency: 'KES' };
+    for (var k = 0; k < fields.length; k++) {
+      var key = fields[k];
+      if (vals[key] !== currentEditProduct[key]) body[key] = vals[key];
+    }
+  } else {
+    body = { id: id, name: name, price: price, stock: parseInt(document.getElementById('pfStock').value) || 0, tag: document.getElementById('pfTag').value, image: document.getElementById('pfImage').value.trim(), description: document.getElementById('pfDescription').value.trim(), currency: 'KES' };
+  }
   var promise = currentEditId ? api('/products/' + currentEditId, { method: 'PATCH', body: body }) : api('/products', { method: 'POST', body: body });
   promise.then(function (d) {
     if (d.status) { closeModal('productModal'); loadProducts(); }

@@ -3,10 +3,10 @@ import express from 'express';
 import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import supabase from './db/supabase.js';
+import { getProducts, addMessage, addOrder, waitForStore } from './db/store.js';
 import paymentRoutes from './routes/payments.js';
 import ordersRoutes from './routes/orders.js';
-import adminRoutes, { getProducts } from './routes/admin.js';
+import adminRoutes from './routes/admin.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -15,6 +15,14 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 app.use(cors());
 app.use(express.json());
 app.set('trust proxy', true);
+
+app.use((_req, res, next) => {
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.set('Pragma', 'no-cache');
+  res.set('Expires', '0');
+  next();
+});
+
 app.use(express.static(path.join(__dirname)));
 
 app.use('/admin', express.static(path.join(__dirname), { index: 'admin.html' }));
@@ -28,37 +36,52 @@ app.post('/api/contact', async (req, res) => {
     return res.status(400).json({ error: 'All fields are required' });
   }
 
-  try {
-    const { error } = await supabase.from('contact_messages').insert([
-      { name, email, message }
-    ]);
-    if (error) console.warn('Contact save warning:', error.message);
-  } catch (err) {
-    console.warn('Contact save failed (non-fatal):', err.message);
-  }
+  await addMessage({ name, email, message, read: false, created_at: new Date().toISOString() });
 
   console.log('Contact inquiry:', { name, email, message });
   res.json({ status: true, message: 'Inquiry received' });
 });
 
 app.get('/api/products', async (_req, res) => {
-  try {
-    const { data, error } = await supabase
-      .from('products')
-      .select('id, name, price, currency, tag, image, description')
-      .order('created_at');
-
-    if (!error && data) {
-      return res.json(data);
-    }
-  } catch (err) {
-    console.warn('Products fetch failed:', err.message);
-  }
-
   const products = await getProducts();
   res.json(products);
 });
 
+/* ───── Also store orders created via payment flow ───── */
+
+app.post('/api/create-order', async (req, res) => {
+  try {
+    const { shipping, productId, productName, amount, currency, paymentReference } = req.body;
+
+    if (!shipping || !shipping.name || !shipping.email || !shipping.phone || !shipping.address) {
+      return res.status(400).json({ error: 'Shipping details incomplete' });
+    }
+
+    const orderId = 'ORD-' + Date.now().toString(36).toUpperCase() + '-' + Math.random().toString(36).substring(2, 6).toUpperCase();
+    const order = {
+      id: orderId,
+      product_id: productId,
+      product_name: productName,
+      amount,
+      currency: currency || 'KES',
+      payment_reference: paymentReference || '',
+      shipping,
+      status: paymentReference ? 'paid' : 'pending',
+      admin_notes: '',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+
+    await addOrder(order);
+    console.log('Order created:', orderId);
+    res.json({ status: true, orderId, order });
+  } catch (err) {
+    console.error('Create order error:', err);
+    res.status(500).json({ error: 'Failed to create order' });
+  }
+});
+
+await waitForStore();
 app.listen(PORT, () => {
   console.log(`RAREHOOKS running on http://localhost:${PORT}`);
 });

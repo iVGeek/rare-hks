@@ -4,10 +4,11 @@ const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_SERVICE_KEY;
 
 if (!supabaseUrl || !supabaseKey) {
-  console.error('Missing SUPABASE_URL or SUPABASE_SERVICE_KEY in .env');
-  process.exit(1);
+  console.warn('Supabase: missing SUPABASE_URL or SUPABASE_SERVICE_KEY — running without DB');
 }
 
-const supabase = createClient(supabaseUrl, supabaseKey);
+const supabase = (supabaseUrl && supabaseKey)
+  ? createClient(supabaseUrl, supabaseKey)
+  : null;
 
 export default supabase;
