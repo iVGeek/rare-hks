@@ -293,7 +293,14 @@
     <div class="form-group"><label>Price (KES) *</label><input type="number" id="pfPrice" placeholder="2500"></div>
     <div class="form-group"><label>Stock</label><input type="number" id="pfStock" placeholder="10"></div>
     <div class="form-group"><label>Tag</label><select id="pfTag"><option value="Ready-Made">Ready-Made</option><option value="Made to Order">Made to Order</option><option value="Bundle">Bundle</option></select></div>
-    <div class="form-group"><label>Image URL</label><input type="url" id="pfImage" placeholder="https://..."></div>
+    <div class="form-group"><label>Image</label>
+      <div style="display:flex;gap:8px;align-items:stretch;">
+        <input type="url" id="pfImage" placeholder="https://..." style="flex:1;">
+        <button type="button" class="btn-upload" onclick="document.getElementById('pfFileInput').click()" style="background:#333;color:#FFD700;border:1px solid #FFD700;border-radius:6px;padding:0 16px;cursor:pointer;white-space:nowrap;font-size:0.85rem;">Upload</button>
+        <input type="file" id="pfFileInput" accept="image/*" style="display:none" onchange="uploadImage(this)">
+      </div>
+      <div id="pfUploadStatus" style="font-size:0.75rem;color:#888;margin-top:4px;"></div>
+    </div>
     <div class="form-group"><label>Description</label><textarea id="pfDescription" placeholder="Product description..." rows="3"></textarea></div>
     <div class="modal-actions"><button class="save" id="productModalSave">Save</button><button class="cancel" onclick="closeModal('productModal')">Cancel</button></div>
   </div>
@@ -539,6 +546,29 @@ function saveProduct() {
 function deleteProduct(id) {
   if (!confirm('Delete "' + id + '"?')) return;
   api('/products/' + id, { method: 'DELETE' }).then(function (d) { if (d.status) loadProducts(); else alert(d.error || 'Failed'); });
+}
+
+/* ───── Image Upload ───── */
+
+function uploadImage(input) {
+  var file = input.files[0];
+  if (!file) return;
+  var status = document.getElementById('pfUploadStatus');
+  status.textContent = 'Uploading...';
+  var fd = new FormData();
+  fd.append('image', file);
+  fetch('/api/admin/upload', { method: 'POST', headers: { 'x-admin-token': TOKEN }, body: fd })
+    .then(function (r) { return r.json(); })
+    .then(function (d) {
+      if (d.status && d.url) {
+        document.getElementById('pfImage').value = d.url;
+        status.innerHTML = 'Uploaded <span style="color:#FFD700;">✓</span>';
+        setTimeout(function () { status.textContent = ''; }, 3000);
+      } else {
+        status.textContent = 'Upload failed: ' + (d.error || 'unknown');
+      }
+    })
+    .catch(function () { status.textContent = 'Upload error — check connection'; });
 }
 
 /* ───── Orders ───── */

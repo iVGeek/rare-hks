@@ -7,6 +7,7 @@ import { getProducts, addMessage, addOrder, waitForStore } from './db/store.js';
 import paymentRoutes from './routes/payments.js';
 import ordersRoutes from './routes/orders.js';
 import adminRoutes from './routes/admin.js';
+import uploadRoutes from './routes/upload.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -29,6 +30,9 @@ app.use('/admin', express.static(path.join(__dirname), { index: 'admin.html' }))
 app.use('/api', paymentRoutes);
 app.use('/api', ordersRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/admin', uploadRoutes);
+
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 app.post('/api/contact', async (req, res) => {
   const { name, email, message } = req.body;
