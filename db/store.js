@@ -23,7 +23,7 @@ function syncFailed() {
   syncErrorAt = Date.now();
 }
 
-const baseImg = 'https://aabyxfcrrqivjupawxdu.supabase.co/storage/v1/object/public/store-images/4aa43748-90b3-4c4b-b74f-d337ea5b63e1/a1b59555-a5c2-4397-b7de-7ff0cc0e8670/products';
+const baseImg = process.env.STORE_IMAGE_BASE_URL || 'https://aabyxfcrrqivjupawxdu.supabase.co/storage/v1/object/public/store-images/4aa43748-90b3-4c4b-b74f-d337ea5b63e1/a1b59555-a5c2-4397-b7de-7ff0cc0e8670/products';
 
 const defaultProducts = [
   { id: 'jungle-green', name: 'Jungle Green', price: 2500, currency: 'KES', tag: 'Ready-Made', stock: 10, image: baseImg + '/1780164202396.jpeg', description: 'Deep green precision cap with custom charm detail. Adjustable fit. NY edition.' },
@@ -67,8 +67,12 @@ async function initStore() {
   const loaded = await loadFromSupabase();
   if (!loaded) {
     if (store.admins.length === 0) {
-      const masterHash = process.env.ADMIN_PASSWORD_HASH || crypto.createHash('sha256').update('rarehooks2024').digest('hex');
-      store.admins.push({ id: 'master', username: 'master', password_hash: masterHash, role: 'superadmin', created_at: new Date().toISOString() });
+      const masterHash = process.env.ADMIN_PASSWORD_HASH || (process.env.ADMIN_PASSWORD ? crypto.createHash('sha256').update(process.env.ADMIN_PASSWORD).digest('hex') : null);
+      if (masterHash) {
+        store.admins.push({ id: 'master', username: 'master', password_hash: masterHash, role: 'superadmin', created_at: new Date().toISOString() });
+      } else {
+        console.warn('Store: No admin credentials configured. Set ADMIN_PASSWORD or ADMIN_PASSWORD_HASH in .env / Render env vars.');
+      }
     }
     if (store.products.length === 0) {
       store.products.push(...defaultProducts.map(p => ({ ...p, created_at: new Date().toISOString() })));

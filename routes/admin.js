@@ -26,7 +26,7 @@ function generateCode() {
 function createTransporter() {
   const user = process.env.GMAIL_USER;
   const pass = process.env.GMAIL_APP_PASSWORD;
-  if (!user || !pass || pass === 'your_gmail_app_password_here') return null;
+  if (!user || !pass) return null;
   return nodemailer.createTransport({
     service: 'gmail',
     auth: { user, pass },
@@ -70,15 +70,13 @@ router.post('/login', async (req, res) => {
     const { username, password } = req.body;
     if (!password) return res.status(400).json({ error: 'Password required' });
 
-    const masterHash = process.env.ADMIN_PASSWORD_HASH || hashPassword('rarehooks2024');
     const admins = await getAdmins();
     let user;
 
     if (username) {
       user = admins.find(a => a.username === username);
     } else {
-      user = admins.find(a => a.password_hash === hashPassword(password))
-          || { id: 'master', username: 'master', password_hash: masterHash, role: 'superadmin' };
+      user = admins.find(a => a.password_hash === hashPassword(password));
     }
 
     if (!user || user.password_hash !== hashPassword(password)) {
